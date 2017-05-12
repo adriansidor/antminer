@@ -105,3 +105,38 @@ time3<-function() {
 time4<-function() {
   system.time(replicate(100,dt[edibility=="p"]))
 }
+
+runalgorytm<-function() {
+  cars <- read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"), header = FALSE)
+  names(cars) <- c("buying", "maint", "doors", "persons", "lug_boot", "safety", "evaluation")
+  sam<-sample(2,nrow(cars),replace = TRUE, prob=c(0.7,0.3))
+  trainset_cars<-cars[sam==1,]
+  testset_cars<-cars[sam==2,]
+  model <- antminer5(trainset_cars, "evaluation", 10, 1000, 10, 10)
+  result <- predict.antminer5(model, subset(testset_cars, select=-evaluation))
+  tab<-conf_matrix_table(result$class, testset_cars$evaluation)
+  conf <- confusionMatrix(tab)
+  res<-c("antminer", conf$overall['Accuracy'])
+}
+
+cars <- read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/car/car.data"), header = FALSE)
+names(cars) <- c("buying", "maint", "doors", "persons", "lug_boot", "safety", "evaluation")
+sam<-sample(2,nrow(cars),replace = TRUE, prob=c(0.7,0.3))
+trainset_cars<-cars[sam==1,]
+testset_cars<-cars[sam==2,]
+model <- antminer5(trainset_cars, "evaluation", 10, 1000, 10, 10)
+result <- predict.antminer5(model, subset(testset_cars, select=-evaluation))
+tab<-conf_matrix_table(result$class, testset_cars$evaluation)
+conf <- confusionMatrix(tab)
+res<-c("antminer", conf$overall['Accuracy'])
+
+nursery <- read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/nursery/nursery.data"), header = FALSE)
+names(nursery) <- c("parents", "has_nurs", "form", "children", "housing", "finance", "social", "health", "application")
+sam<-sample(2,nrow(nursery),replace = TRUE, prob=c(0.7,0.3))
+trainset_nursery<-nursery[sam==1,]
+testset_nursery<-nursery[sam==2,]
+model_nursery <- antminer5(trainset_nursery, "application", 10, 1000, 10, 10)
+result_nursery <- predict.antminer5(model_nursery, subset(testset_nursery, select=-application))
+tab_nursery<-conf_matrix_table(result_nursery$class, testset_nursery$application)
+conf_nursery <- confusionMatrix(tab_nursery)
+res_nursery<-c("antminer", conf_nursery$overall['Accuracy'])
