@@ -41,8 +41,8 @@ time<-function(size) {
 }
 
 time<-function(size) {
-  trainingSet<-mushroom[-17]
-  system.time( replicate(size, antminer3(trainingSet, "edibility", 10, 2, 10, 10) ) )
+  trainingSet<-kredyt
+  system.time( replicate(size, antminer4(trainingSet, "ryzyko", 10, 10, 10, 10) ) )
 }
 
 time<-function(size) {
@@ -67,11 +67,13 @@ time<-function(size) {
   #system.time( replicate(size, TP2(rule[[1]],rule[[2]], trainingSet, class)))
   #system.time( replicate(size, TP3(rule, trainingSet, class)))
   #FP(rule, trainingSet, class)
-  system.time( replicate(size, antminer3(trainingSet, "ryzyko", 2, 100, 2, 2) ) )
+  #system.time( replicate(size, antminer3(trainingSet, "ryzyko", 2, 100, 2, 2) ) )
+  model <- antminer5(trainingSet, "ryzyko", 2, 100, 2, 2)
+  predict(model, subset(trainingSet, select=-ryzyko))
 }
 
 time<-function(size) {
-  model <- antminer3(kredyt, "ryzyko", 2, 100, 10, 2)
+  model <- antminer4(kredyt, "ryzyko", 2, 100, 10, 2)
   #system.time( replicate(size, prune(rule, trainingSet, class) ) )
   #system.time( replicate(size, TP2(rule[[1]],rule[[2]], trainingSet, class) ) )
   #system.time( replicate(size, TP(rule, trainingSet, class) ) )

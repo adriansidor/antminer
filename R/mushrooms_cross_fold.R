@@ -15,6 +15,7 @@ results_mushroom[3, 1]<-c("naive bayes")
 results_mushroom[4, 1]<-c("cart")
 results_mushroom[5, 1]<-c("antminer")
 
+starttime<-Sys.time()
 for(i in 1:loop_size) {
   trainset_mushroom<-mushroom[ folds[[i]] ,]
   testset_mushroom<-mushroom[ -folds[[i]] ,]
@@ -45,12 +46,13 @@ for(i in 1:loop_size) {
   conf6 <- confusionMatrix(tab6)
   results_mushroom[4, i+1]<-c(conf6$overall['Accuracy'])
 
-  model7 <- antminer4(trainset_mushroom, "edibility", 10, 3000, 10, 10)
+  model7 <- antminer4(trainset_mushroom, "edibility", 10, 100, 10, 10)
   #model7 <- antminer3(mushroom, "edibility", 10, 3000, 10, 10)
   result7 <- predict(model7, subset(testset_mushroom, select=-edibility))
   tab7<-conf_matrix_table(result7$class, testset_mushroom$edibility)
   conf7 <- confusionMatrix(tab7)
   results_mushroom[5, i+1]<-c(conf7$overall['Accuracy'])
 }
-
+print("calkowity czas")
+print(starttime-Sys.time())
 results_mushroom

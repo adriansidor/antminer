@@ -33,7 +33,7 @@ run_C50 <- function(trainset, testset, column, results, loop) {
 load_libraries <- function() {
   library(e1071)
   library(rpart)
-  library(antminer)
+  #library(antminer)
   library(entropy)
   library(caret)
   library(C50)
@@ -45,4 +45,13 @@ load_libraries <- function() {
 install <- function() {
   install.packages("dplyr")
   install.packages("data.table")
+  install.packages("e1071")
+  #svm
+  install.packages("e1071")
+  #C5.0
+  install.packages("C50")
+  #confusion matrix
+  install.packages("caret", dependencies = TRUE)
+  #antminer
+  install.packages("entropy", repos = "http://cran.us.r-project.org")
 }

@@ -36,19 +36,19 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
   nr_of_class<-nrow(unique(trainingSet[,class, with=FALSE]))
 
   #####wyznacz wszystkie termy (pary atrybut-wartosc)
-  terms <- getTerms(trainingSet[,!class, with=FALSE])
+  terms <- getTerms4(trainingSet[,!class, with=FALSE])
   #####koniec
   initialPheromone <- 1/length(unlist(terms))
   nr_of_columns<-length(terms)
 
   #wyznacz entropie dla kazdego termu
-  entropies<-computeEntropy(terms, trainingSet, class)
+  entropies<-computeEntropy4(terms, trainingSet, class)
 
   #na poczatku lista regul jest pusta
   discoveredRules <- list()
   while(nrow(trainingSet) > maxUncoveredCases) {
-    print('mrowka numer')
     print(nrow(trainingSet))
+    #print(nrow(trainingSet))
     #numer mrowki
     i <- 1;
     #indeks testu zbieznosci
@@ -68,8 +68,6 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
     #powtarzamy az wykorzystamy wszystkie mrowki
     #albo gdy przekroczymy indeks zbierznosci
     while( (i<NumberOfAnts) & (j<NumberOfRulesConverge) ) {
-      print("bla")
-      print(i)
       #regula to lista skladajaca sie z dwoch list
       #pierwsza lista to zbior termow tworzacych regule
       #druga lista przechowuje atrybuty (w kolejnosci) wykorzystane w regule
@@ -102,7 +100,9 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
         etas <- lapply(entropies ,function(x) {sapply(x, function(entropy) {eta(nr_of_class, x, entropy, rule.used_attributes)})})
         #######koniec compute eta
         #######compute probabilities##########################
-        probabilities <- mapply(function(x, y) {mapply(function(eta, pheromone) {(eta*pheromone)/(sum.used_attributes*sum(x*y))}, x, y)}, etas, pheromones)
+        #some prob can be 0
+        #adding 1 to all prob solves this problem
+        probabilities <- mapply(function(x, y) {mapply(function(eta, pheromone) {( (eta*pheromone)/(sum.used_attributes*sum(x*y)) ) + 1}, x, y)}, etas, pheromones)
         #######koniec compute probabilities
         #wylosowane termy na podstawie prawdopodobienstwa
         unlistTerms <- unlist(removeUsedTerms(terms, rule.used_attributes))
@@ -137,17 +137,17 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
 
       #nie udalo sie dodac termu, za malo pokrytych przypadkow
       if(addedTermIndex == 1) {
-        return (NULL)
+        rule<-NULL
+      } else {
+        rule[[1]][addedTermIndex]<-majorClass2(trainingSet2, class)
+        rule[[1]]<-rule[[1]][rule[[1]] != ""]
+        rule[[2]][addedTermIndex]<-maxAttributes+1
+        rule[[2]]<-rule[[2]][rule[[2]] != 0]
       }
 
-      rule[[1]][addedTermIndex]<-majorClass2(trainingSet2, class)
-      rule[[1]]<-rule[[1]][rule[[1]] != ""]
-      rule[[2]][addedTermIndex]<-maxAttributes+1
-      rule[[2]]<-rule[[2]][rule[[2]] != 0]
       trainingSet2<-NULL
       #####koniec budowy reguly
 
-      print("zbudowana regula")
       #jesli regula jest null to znaczy ze nie spelnila warunku MinCasesPerRule
       #w takim przypadku juz wiecej regul nie powstanie
       if(is.null(rule)) {
@@ -156,10 +156,10 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
 
       ########przycinanie reguly##############################
       isBetterQuality <- TRUE;
-      bestQuality <- quality(rule, trainingSet, class, columnNames)
+      bestQuality <- quality4(rule, trainingSet, class, columnNames)
       n<-length(rule[[2]])
       while( n > 2 & isBetterQuality) {
-        qualities<-sapply(1:(n-1), function(k) {quality(removeTerm(rule,k), trainingSet, class, columnNames)})
+        qualities<-sapply(1:(n-1), function(k) {quality4(removeTerm(rule,k), trainingSet, class, columnNames)})
         id<- which.max(qualities)
         maxquality <- qualities[id]
         if(maxquality > bestQuality) {
@@ -219,14 +219,15 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
   }
   defaultClass <- majorClass2(trainingSet, class)
   model <- list(discoveredRules, defaultClass)
-  class(model)<-"antminer"
+  class(model)<-"antminer4"
+  print("dodaje klase")
   return(model)
 }
 
 #zwraca wszystkie termy na podstawie danych treningowych
 #dane treningowe musza byc bez kolumny z atrybutem decyzyjnym
 #bo w innym razie zwrocilby takze termy w postaci atrybutow decyzyjnych
-getTerms<-function(trainingSet) {
+getTerms4<-function(trainingSet) {
   #zwraca unikalne wartości z każdej kolumny danych treningowych
   #2 oznacza ze operuje na kolumnach, 1 by oznaczala ze na wierszach
   terms<-apply(trainingSet, 2, unique)
@@ -243,7 +244,7 @@ namedTerm<-function(term, terms) {
 #Zwraca obliczona entropie dla kazdej pary atrybut-wartosc
 #pierwszy terms oznacza liste list wszystkich atrybutow
 #drugie terms oznacza liste atrybutu (jednego), czyli wartosci tego atrybutu
-computeEntropy <- function(terms, data, class) {
+computeEntropy4 <- function(terms, data, class) {
   mapply(function(terms, index) {sapply(terms, function(x) {entropy(x, index, data, class)})}, terms, 1:length(terms))
 }
 
@@ -425,10 +426,10 @@ majorClass2<-function(trainingSet, class) {
 #Przycina regule
 prune <- function(rule, trainingSet, class) {
   isBetterQuality <- TRUE;
-  bestQuality <- quality(rule, trainingSet, class)
+  bestQuality <- quality4(rule, trainingSet, class)
   n<-length(rule[[2]])
   while( n > 2 & isBetterQuality) {
-    qualities<-sapply(1:(n-1), function(i) {quality(removeTerm(rule,i), trainingSet, class)})
+    qualities<-sapply(1:(n-1), function(i) {quality4(removeTerm(rule,i), trainingSet, class)})
     id<- which.max(qualities)
     maxquality <- qualities[id]
     if(maxquality > bestQuality) {
@@ -456,7 +457,7 @@ getFilter<-function(rule) {
 }
 
 #mierzy jakosc reguly
-quality <- function(rule, trainingSet, class, columnNames) {
+quality4 <- function(rule, trainingSet, class, columnNames) {
   n<-length(rule[[1]])
   predictedClass<-rule[[1]][n]
   coveredIndex<-Reduce(intersect, mapply(function(x,y) {trainingSet[get(columnNames[y]) == x, which=TRUE]}, rule[[1]][-n], rule[[2]][-n]))
@@ -534,7 +535,7 @@ uncoveredCases <- function(rule, trainingSet, class) {
 }
 
 #wnioskowanie klas danych na podstawie modelu
-predict.antminer3 <- function(model, data) {
+predict.antminer4 <- function(model, data) {
   discoveredRules <- model[[1]]
   defaultClass <- model[[2]]
   test<-apply(data,1, function(x) {

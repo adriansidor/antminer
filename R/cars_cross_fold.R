@@ -4,51 +4,107 @@ names(cars) <- c("buying", "maint", "doors", "persons", "lug_boot", "safety", "e
 #10-fold-cross-validation
 #sprawdzian krzyzowy (10 krotna walidacja)
 loop_size<-10
-folds <- createFolds(cars$evaluation, k = loop_size, returnTrain = TRUE)
+antminer4_cars_folds_run2 <- createFolds(cars$evaluation, k = loop_size, returnTrain = TRUE)
 
 #data frame with all results
-results_cars <- as.data.frame(setNames(replicate(loop_size+1,numeric(0), simplify = F), c("algorithm", "accuracy")))
-results_cars[1, 1]<-c("C5.0")
-results_cars[2, 1]<-c("svm")
-results_cars[3, 1]<-c("naive bayes")
-results_cars[4, 1]<-c("cart")
-results_cars[5, 1]<-c("antminer")
+antminer4_results_cars_run2 <- as.data.frame(setNames(replicate(loop_size+1,numeric(0), simplify = F), c("algorithm", "accuracy")))
+antminer4_results_cars_run2[1, 1]<-c("C5.0")
+antminer4_results_cars_run2[2, 1]<-c("svm")
+antminer4_results_cars_run2[3, 1]<-c("naive bayes")
+antminer4_results_cars_run2[4, 1]<-c("cart")
+antminer4_results_cars_run2[5, 1]<-c("antminer")
 
+starttime<-Sys.time()
 for(i in 1:loop_size) {
-  trainset_cars<-cars[ folds[[i]] ,]
-  testset_cars<-cars[ -folds[[i]] ,]
+  antminer4_trainset_cars_run2<-cars[ antminer4_cars_folds_run2[[i]] ,]
+  antminer4_testset_cars_run2<-cars[ -antminer4_cars_folds_run2[[i]] ,]
 
-  model1 <- C5.0(evaluation ~ ., data=trainset_cars)
-  result1 <- predict(object=model1, newdata=testset_cars, type="class")
-  tab1<-conf_matrix_table(result1, testset_cars$evaluation)
-  conf1 <- confusionMatrix(tab1)
-  conf1$overall['Accuracy']
-  results_cars[1, i+1]<-c(conf1$overall['Accuracy'])
+  antminer4_cars_model_c50_run2 <- C5.0(evaluation ~ ., data=antminer4_trainset_cars_run2)
+  antminer4_cars_result_c50_run2 <- predict(object=antminer4_cars_model_c50_run2, newdata=antminer4_testset_cars_run2, type="class")
+  antminer4_cars_tab_c50_run2<-conf_matrix_table(antminer4_cars_result_c50_run2, antminer4_testset_cars_run2$evaluation)
+  antminer4_cars_conf_c50_run2 <- confusionMatrix(antminer4_cars_tab_c50_run2)
+  antminer4_cars_conf_c50_run2$overall['Accuracy']
+  antminer4_results_cars_run2[1, i+1]<-c(antminer4_cars_conf_c50_run2$overall['Accuracy'])
 
-  model3 <- svm(evaluation ~ ., data=trainset_cars)
-  result3 <- predict(object=model3, newdata=testset_cars, type="class")
-  tab3<-conf_matrix_table(result3, testset_cars$evaluation)
-  conf3 <- confusionMatrix(tab3)
-  results_cars[2, i+1]<-c(conf3$overall['Accuracy'])
+  antminer4_cars_model_svm_run2 <- svm(evaluation ~ ., data=antminer4_trainset_cars_run2)
+  antminer4_cars_result_svm_run2 <- predict(object=antminer4_cars_model_svm_run2, newdata=antminer4_testset_cars_run2, type="class")
+  antminer4_cars_tab_svm_run2<-conf_matrix_table(antminer4_cars_result_svm_run2, antminer4_testset_cars_run2$evaluation)
+  antminer4_cars_conf_svm_run2 <- confusionMatrix(antminer4_cars_tab_svm_run2)
+  antminer4_results_cars_run2[2, i+1]<-c(antminer4_cars_conf_svm_run2$overall['Accuracy'])
 
-  model5 <- naiveBayes(x = subset(trainset_cars, select=-evaluation), y = trainset_cars$evaluation)
-  result5 <- predict(object = model5, newdata = testset_cars, type = "class")
-  #result3 <- predict(object=model3, newdata=testset_cars, type="class")
-  tab5<-conf_matrix_table(result5, testset_cars$evaluation)
-  conf5 <- confusionMatrix(tab5)
-  results_cars[3, i+1]<-c(conf5$overall['Accuracy'])
+  antminer4_cars_model_bayes_run2 <- naiveBayes(x = subset(antminer4_trainset_cars_run2, select=-evaluation), y = antminer4_trainset_cars_run2$evaluation)
+  antminer4_cars_result_bayes_run2 <- predict(object = antminer4_cars_model_bayes_run2, newdata = antminer4_testset_cars_run2, type = "class")
+  #antminer4_cars_result_svm_run2 <- predict(object=antminer4_cars_model_svm_run2, newdata=antminer4_testset_cars_run2, type="class")
+  antminer4_cars_tab_bayes_run2<-conf_matrix_table(antminer4_cars_result_bayes_run2, antminer4_testset_cars_run2$evaluation)
+  antminer4_cars_conf_bayes_run2 <- confusionMatrix(antminer4_cars_tab_bayes_run2)
+  antminer4_results_cars_run2[3, i+1]<-c(antminer4_cars_conf_bayes_run2$overall['Accuracy'])
 
-  model6 <- rpart(evaluation ~ ., data=trainset_cars)
-  result6 <- predict(object=model6, newdata=testset_cars, type="class")
-  tab6<-conf_matrix_table(result6, testset_cars$evaluation)
-  conf6 <- confusionMatrix(tab6)
-  results_cars[4, i+1]<-c(conf6$overall['Accuracy'])
+  antminer4_cars_model_rpart_run2 <- rpart(evaluation ~ ., data=antminer4_trainset_cars_run2)
+  antminer4_cars_result_rpart_run2 <- predict(object=antminer4_cars_model_rpart_run2, newdata=antminer4_testset_cars_run2, type="class")
+  antminer4_cars_tab6<-conf_matrix_table(antminer4_cars_result_rpart_run2, antminer4_testset_cars_run2$evaluation)
+  antminer4_cars_conf_rpart_run2 <- confusionMatrix(antminer4_cars_tab6)
+  antminer4_results_cars_run2[4, i+1]<-c(antminer4_cars_conf_rpart_run2$overall['Accuracy'])
 
-  model7 <- antminer(trainset_cars, "evaluation", 10, 3000, 10, 10)
-  result7 <- predict(model7, subset(testset_cars, select=-evaluation))
-  tab7<-conf_matrix_table(result7$class, testset_cars$evaluation)
-  conf7 <- confusionMatrix(tab7)
-  results_cars[5, i+1]<-c(conf7$overall['Accuracy'])
+  antminer4_cars_model_ant_run2 <- antminer4(antminer4_trainset_cars_run2, "evaluation", 10, 1000, 10, 10)
+  antminer4_cars_result_ant_run2 <- predict(antminer4_cars_model_ant_run2, subset(antminer4_testset_cars_run2, select=-evaluation))
+  antminer4_cars_tab_ant_run2<-conf_matrix_table(antminer4_cars_result_ant_run2$class, antminer4_testset_cars_run2$evaluation)
+  antminer4_cars_conf_ant_run2 <- confusionMatrix(antminer4_cars_tab_ant_run2)
+  antminer4_results_cars_run2[5, i+1]<-c(antminer4_cars_conf_ant_run2$overall['Accuracy'])
 }
 
-results_cars
+print('czas wykonania')
+print(starttime-Sys.time())
+antminer4_results_cars_run2
+
+loop_size<-10
+antminer4_cars_folds_run3 <- createFolds(cars$evaluation, k = loop_size, returnTrain = TRUE)
+
+#data frame with all results
+antminer4_results_cars_run3 <- as.data.frame(setNames(replicate(loop_size+1,numeric(0), simplify = F), c("algorithm", "accuracy")))
+antminer4_results_cars_run3[1, 1]<-c("C5.0")
+antminer4_results_cars_run3[2, 1]<-c("svm")
+antminer4_results_cars_run3[3, 1]<-c("naive bayes")
+antminer4_results_cars_run3[4, 1]<-c("cart")
+antminer4_results_cars_run3[5, 1]<-c("antminer")
+
+starttime<-Sys.time()
+for(i in 1:loop_size) {
+  antminer4_trainset_cars_run3<-cars[ antminer4_cars_folds_run3[[i]] ,]
+  antminer4_testset_cars_run3<-cars[ -antminer4_cars_folds_run3[[i]] ,]
+
+  antminer4_cars_model_c50_run3 <- C5.0(evaluation ~ ., data=antminer4_trainset_cars_run3)
+  antminer4_cars_result_c50_run3 <- predict(object=antminer4_cars_model_c50_run3, newdata=antminer4_testset_cars_run3, type="class")
+  antminer4_cars_tab_c50_run3<-conf_matrix_table(antminer4_cars_result_c50_run3, antminer4_testset_cars_run3$evaluation)
+  antminer4_cars_conf_c50_run3 <- confusionMatrix(antminer4_cars_tab_c50_run3)
+  antminer4_cars_conf_c50_run3$overall['Accuracy']
+  antminer4_results_cars_run3[1, i+1]<-c(antminer4_cars_conf_c50_run3$overall['Accuracy'])
+
+  antminer4_cars_model_svm_run3 <- svm(evaluation ~ ., data=antminer4_trainset_cars_run3)
+  antminer4_cars_result_svm_run3 <- predict(object=antminer4_cars_model_svm_run3, newdata=antminer4_testset_cars_run3, type="class")
+  antminer4_cars_tab_svm_run3<-conf_matrix_table(antminer4_cars_result_svm_run3, antminer4_testset_cars_run3$evaluation)
+  antminer4_cars_conf_svm_run3 <- confusionMatrix(antminer4_cars_tab_svm_run3)
+  antminer4_results_cars_run3[2, i+1]<-c(antminer4_cars_conf_svm_run3$overall['Accuracy'])
+
+  antminer4_cars_model_bayes_run3 <- naiveBayes(x = subset(antminer4_trainset_cars_run3, select=-evaluation), y = antminer4_trainset_cars_run3$evaluation)
+  antminer4_cars_result_bayes_run3 <- predict(object = antminer4_cars_model_bayes_run3, newdata = antminer4_testset_cars_run3, type = "class")
+  #antminer4_cars_result_svm_run3 <- predict(object=antminer4_cars_model_svm_run3, newdata=antminer4_testset_cars_run3, type="class")
+  antminer4_cars_tab_bayes_run3<-conf_matrix_table(antminer4_cars_result_bayes_run3, antminer4_testset_cars_run3$evaluation)
+  antminer4_cars_conf_bayes_run3 <- confusionMatrix(antminer4_cars_tab_bayes_run3)
+  antminer4_results_cars_run3[3, i+1]<-c(antminer4_cars_conf_bayes_run3$overall['Accuracy'])
+
+  antminer4_cars_model_rpart_run3 <- rpart(evaluation ~ ., data=antminer4_trainset_cars_run3)
+  antminer4_cars_result_rpart_run3 <- predict(object=antminer4_cars_model_rpart_run3, newdata=antminer4_testset_cars_run3, type="class")
+  antminer4_cars_tab6<-conf_matrix_table(antminer4_cars_result_rpart_run3, antminer4_testset_cars_run3$evaluation)
+  antminer4_cars_conf_rpart_run3 <- confusionMatrix(antminer4_cars_tab6)
+  antminer4_results_cars_run3[4, i+1]<-c(antminer4_cars_conf_rpart_run3$overall['Accuracy'])
+
+  antminer4_cars_model_ant_run3 <- antminer4(antminer4_trainset_cars_run3, "evaluation", 10, 1000, 10, 10)
+  antminer4_cars_result_ant_run3 <- predict(antminer4_cars_model_ant_run3, subset(antminer4_testset_cars_run3, select=-evaluation))
+  antminer4_cars_tab_ant_run3<-conf_matrix_table(antminer4_cars_result_ant_run3$class, antminer4_testset_cars_run3$evaluation)
+  antminer4_cars_conf_ant_run3 <- confusionMatrix(antminer4_cars_tab_ant_run3)
+  antminer4_results_cars_run3[5, i+1]<-c(antminer4_cars_conf_ant_run3$overall['Accuracy'])
+}
+
+print('czas wykonania')
+print(starttime-Sys.time())
+antminer4_results_cars_run3
