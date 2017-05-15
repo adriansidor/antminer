@@ -1,3 +1,4 @@
+
 conf_matrix_table <- function(predicted, actual) {
   #y <- testset_cars$evaluation
   #l <- union(result7$class, y)

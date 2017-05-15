@@ -389,16 +389,16 @@ predict.antminer6 <- function(model, data) {
     coveredRules<-discoveredRules[which(result == TRUE)]
 
     if(length(coveredRules)!=0) {
-      #pierwsze kryterium - najdluzsze reguly
-      #Wybieramy reguly najbardziej pasujace
-      rules_lengths<-sapply(coveredRules, function(rule) {length(rule[[1]])} )
-      max_length<-max(rules_lengths)
-      coveredRules<-coveredRules[which(rules_lengths == max_length)]
       #drugie kryterium - jakosc reguly
       #wybieramy reguly o najwyzszej jakosci
       rules_qualities<-sapply(coveredRules, function(rule) {rule[[3]]})
       max_quality<-max(rules_qualities)
       coveredRules<-coveredRules[which(rules_qualities == max_quality)]
+      #pierwsze kryterium - najdluzsze reguly
+      #Wybieramy reguly najbardziej pasujace
+      rules_lengths<-sapply(coveredRules, function(rule) {length(rule[[1]])} )
+      max_length<-max(rules_lengths)
+      coveredRules<-coveredRules[which(rules_lengths == max_length)]
       #trzecie kryterium - kolejnosc reguly
       #wybieramy regule ktora zostala dodana wczesniej
 

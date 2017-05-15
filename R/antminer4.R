@@ -103,6 +103,8 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
         #some prob can be 0
         #adding 1 to all prob solves this problem
         probabilities <- mapply(function(x, y) {mapply(function(eta, pheromone) {( (eta*pheromone)/(sum.used_attributes*sum(x*y)) ) + 1}, x, y)}, etas, pheromones)
+        print(probabilities)
+        browser()
         #######koniec compute probabilities
         #wylosowane termy na podstawie prawdopodobienstwa
         unlistTerms <- unlist(removeUsedTerms4(terms, rule.used_attributes))
@@ -329,7 +331,7 @@ removeTerm4<-function(rule, index) {
 quality4 <- function(rule, trainingSet, class, columnNames) {
   n<-length(rule[[1]])
   predictedClass<-rule[[1]][n]
-  coveredIndex<-Reduce(intersect, mapply(function(x,y) {trainingSet[get(columnNames[y]) == x, which=TRUE]}, rule[[1]][-n], rule[[2]][-n]))
+  coveredIndex<-Reduce(intersect, mapply(function(x,y) {trainingSet[get(columnNames[y]) == x, which=TRUE]}, rule[[1]][-n], rule[[2]][-n], SIMPLIFY = FALSE))
   #pokryte przypadki przez regule
   cases<-trainingSet[coveredIndex]
   tp<-nrow(cases[get(class) == predictedClass])
