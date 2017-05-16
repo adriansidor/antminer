@@ -15,6 +15,7 @@ results_cars_run1[4, 1]<-c("cart")
 results_cars_run1[5, 1]<-c("antminer4")
 results_cars_run1[6, 1]<-c("antminer5")
 results_cars_run1[7, 1]<-c("antminer6")
+results_cars_run1[8, 1]<-c("antminer7")
 
 starttime<-Sys.time()
 for(i in 1:loop_size) {
@@ -248,4 +249,21 @@ for(i in 1:loop_size) {
 
 print('czas wykonania')
 print(starttime-Sys.time())
-results_nursery_run1
+results_cars_run1
+
+starttime<-Sys.time()
+for(i in 1:loop_size) {
+  trainset_cars_run1<-cars[ cars_folds_run1[[i]] ,]
+  testset_cars_run1<-cars[ -cars_folds_run1[[i]] ,]
+
+  cars_model_ant7_run1 <- antminer7(trainset_cars_run1, "evaluation", 10, 1000, 10, 10)
+  cars_result_ant7_run1 <- predict.antminer7(cars_model_ant7_run1, subset(testset_cars_run1, select=-evaluation))
+  cars_tab_ant7_run1<-conf_matrix_table(cars_result_ant7_run1$class, testset_cars_run1$evaluation)
+  cars_conf_ant7_run1 <- confusionMatrix(cars_tab_ant7_run1)
+  results_cars_run1[8, i+1]<-c(cars_conf_ant7_run1$overall['Accuracy'])
+
+}
+
+print('czas wykonania')
+print(starttime-Sys.time())
+results_cars_run1
