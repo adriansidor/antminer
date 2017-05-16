@@ -175,6 +175,7 @@ results_nursery_run1[4, 1]<-c("cart")
 results_nursery_run1[5, 1]<-c("antminer4")
 results_nursery_run1[6, 1]<-c("antminer5")
 results_nursery_run1[7, 1]<-c("antminer6")
+results_nursery_run1[8, 1]<-c("antminer7")
 
 starttime<-Sys.time()
 for(i in 1:loop_size) {
@@ -233,15 +234,15 @@ results_nursery_run1
 
 
 starttime<-Sys.time()
-for(i in 2:loop_size) {
-  trainset_nursery_run2<-nursery[ nursery_folds_run1[[i]] ,]
-  testset_nursery_run2<-nursery[ -nursery_folds_run1[[i]] ,]
+for(i in 1:loop_size) {
+  trainset_nursery_run1<-nursery[ nursery_folds_run1[[i]] ,]
+  testset_nursery_run1<-nursery[ -nursery_folds_run1[[i]] ,]
 
-  nursery_model_ant5_run2 <- antminer5(trainset_nursery_run2, "application", 10, 1000, 10, 10)
-  nursery_result_ant5_run2 <- predict(nursery_model_ant5_run2, subset(testset_nursery_run2, select=-application))
-  nursery_tab_ant5_run2<-conf_matrix_table(nursery_result_ant5_run2$class, testset_nursery_run2$application)
-  nursery_conf_ant5_run2 <- confusionMatrix(nursery_tab_ant5_run2)
-  results_nursery_run1[6, i+1]<-c(nursery_conf_ant5_run2$overall['Accuracy'])
+  nursery_model_ant7_run1 <- antminer7(trainset_nursery_run1, "application", 10, 1000, 10, 10)
+  nursery_result_ant7_run1 <- predict.antminer7(nursery_model_ant7_run1, subset(testset_nursery_run1, select=-application))
+  nursery_tab_ant7_run1<-conf_matrix_table(nursery_result_ant7_run1$class, testset_nursery_run1$application)
+  nursery_conf_ant7_run1 <- confusionMatrix(nursery_tab_ant7_run1)
+  results_nursery_run1[8, i+1]<-c(nursery_conf_ant7_run1$overall['Accuracy'])
 
 }
 
