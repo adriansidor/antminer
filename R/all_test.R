@@ -153,6 +153,8 @@ for(i in 1:loop_size) {
   breast_cancer_wisconsin_tab_ant6_run1<-conf_matrix_table(breast_cancer_wisconsin_result_ant6_run1$class, testset_breast_cancer_wisconsin_run1$Class)
   breast_cancer_wisconsin_conf_ant6_run1 <- confusionMatrix(breast_cancer_wisconsin_tab_ant6_run1)
   results_breast_cancer_wisconsin_run1[7, i+1]<-c(breast_cancer_wisconsin_conf_ant6_run1$overall['Accuracy'])
+
+
 }
 
 print('czas wykonania')
@@ -267,3 +269,13 @@ for(i in 1:loop_size) {
 print('czas wykonania')
 print(starttime-Sys.time())
 results_cars_run1
+
+
+starttime<-Sys.time()
+
+  breast_cancer_wisconsin_model_ant4_run1 <- antminer4(trainset_breast_cancer_wisconsin_run1, "Class", 10, 1000, 10, 10)
+  print('czas wykonania')
+  print(starttime-Sys.time())
+  breast_cancer_wisconsin_model_ant5_run1 <- antminer5(trainset_breast_cancer_wisconsin_run1, "Class", 10, 1000, 10, 10)
+  print('czas wykonania')
+  print(starttime-Sys.time())
