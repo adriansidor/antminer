@@ -1,6 +1,4 @@
-#install.packages("entropy", repos = "http://cran.us.r-project.org");
 library(entropy);
-
 
 #' @title Antminer
 #' @description Algorytm do budowy modelu klasyfikacji oparty na algorytmie mrowkowym optymalizacji
@@ -29,225 +27,320 @@ library(entropy);
 #' @examples
 #' model <- antminer(trainingSet, "Class", 10, 100, 15, 1)
 #' pred <- predict(model, testSet)
-antminer <- function(data,class, maxUncoveredCases, NumberOfAnts, NumberOfRulesConverge, MinCasesPerRule) {
-  trainingSet <- data;
-  c <- trainingSet[class]
-  trainingSet[class]<-NULL
-  trainingSet[class]<-c;
-  trainingSetWithoutClass <- trainingSet;
-  trainingSetWithoutClass[class]<-NULL;
-  discoveredRules <- list();
-  str(trainingSetWithoutClass)
-  terms <- getTerms(trainingSetWithoutClass);
-  entropy<-computeEntropy(terms, trainingSet, class)
-  #number of classes
-  k<- nrow(unique(trainingSet[class]));
-  #number of attributes
-  n<- ncol(trainingSetWithoutClass);
+antminer <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, NumberOfRulesConverge, MinCasesPerRule) {
+  #zamien data frame na data table
+  trainingSet<-as.data.table(trainingSet)
+  #przenies kolumne z atrybutami decyzyjnymi na sam koniec data table
+  setcolorder(trainingSet, c(setdiff(names(trainingSet), class), class))
+  #liczba klas atrybutu decyzyjnego
+  nr_of_class<-nrow(unique(trainingSet[,class, with=FALSE]))
+
+  #####wyznacz wszystkie termy (pary atrybut-wartosc)
+  terms <- getTerms(trainingSet[,!class, with=FALSE])
+  #####koniec
+  initialPheromone <- 1/length(unlist(terms))
+  nr_of_columns<-length(terms)
+
+  #wyznacz entropie dla kazdego termu
+  entropies<-computeEntropy(terms, trainingSet, class)
+
+  #na poczatku lista regul jest pusta
+  discoveredRules <- list()
   while(nrow(trainingSet) > maxUncoveredCases) {
-    #ant index
+    print(nrow(trainingSet))
+    #print(nrow(trainingSet))
+    #numer mrowki
     i <- 1;
-    #convergence test index
+    #indeks testu zbieznosci
     j <- 1;
-    #initialize pheromone
-    pheromone <- initPheromone(terms)
-    rules <- list();
-    als <- list();
-    qualities <- NULL;
-    while( (i<NumberOfAnts) & (j<NumberOfRulesConverge)) {
-      print("mrowka")
-      print(i)
-      list<- build.rule(trainingSet, terms, MinCasesPerRule, class, k, n, entropy, pheromone);
-      #Oprocz numberOfRulesConverge ktora sprawdza tworzenie podobnych regul
-      #mozna dodac parametr ktory wylacza algorytm jesli nie utworzy reguly
-      #w n krokach, moze sie tak zdarzyc gdy przypadkow jest tak malo ze
-      #nie spelniaja np progu pokrytych regul
-      if(is.null(list)) {
-        i <- i+1;
-        next
+
+    #lista utworzonych regul, na poczatku pusta
+    rules<-list()
+
+    #wektor jakosci regul, zeby wiedziec ktora regula jest najlepsze
+    #sposrod wszystkich stworzonych
+    rules_qualities<-list()
+
+    #inicjalizacja sciezek ta sama iloscia feromonu
+    pheromones <- lapply(terms, function(x) {sapply(x, function(y) {namedPheromone(y,initialPheromone)})})
+
+    columnNames<-names(trainingSet)
+    #powtarzamy az wykorzystamy wszystkie mrowki
+    #albo gdy przekroczymy indeks zbierznosci
+    while( (i<NumberOfAnts) & (j<NumberOfRulesConverge) ) {
+      #regula to lista skladajaca sie z dwoch list
+      #pierwsza lista to zbior termow tworzacych regule
+      #druga lista przechowuje atrybuty (w kolejnosci) wykorzystane w regule
+
+      #####budowa reguly##########################################
+      trainingSet2<-trainingSet
+      #liczba atrybutow
+      maxAttributes <- length(terms)
+
+      #budowana regula
+      #pusta na poczatku
+      #pierwszy element to vektor termow reguly
+      #drugi element to vektor numerow atrybutow, aby wiedziec o kolejnosci atrybutow w regule
+      #powie nam ktory atrybut byl dodany kiedy tylko
+      #czy byl w ogole wykorzystany
+      rule <- list( character(maxAttributes), numeric(maxAttributes), 0 )
+      #informacja o tym ktory atrybut zostal juz uzyty do stworzenia reguly
+      #vector sklada sie z tylu elementow ile jest atrybutow
+      #element moze przyjac 0 co oznacza ze atrybut zostal juz wykorzystany
+      #element moze przyjac 1 co oznacza ze atrybut nie zostal jeszcze wykorzystany
+      #posortowane od pierwszego atrybutu do ostatniego
+      #na poczatku zaden atrybut nie zostal wykorzystany (regula jest pusta)
+      rule.used_attributes <- rep(1, maxAttributes)
+      sum.used_attributes<-sum(rule.used_attributes)
+
+      isMinCasesPerRule<-TRUE
+      addedTermIndex<-1
+      while(sum.used_attributes > 0 & isMinCasesPerRule) {
+        #######compute eta####################################
+        etas <- lapply(entropies ,function(x) {sapply(x, function(entropy) {eta(nr_of_class, x, entropy, rule.used_attributes)})})
+        #######koniec compute eta
+        #######compute probabilities##########################
+        #some prob can be 0
+        #adding 1 to all prob solves this problem
+        probabilities <- mapply(function(x, y) {mapply(function(eta, pheromone) {( (eta*pheromone)/(sum.used_attributes*sum(x*y)) ) + 1}, x, y)}, etas, pheromones)
+        #######koniec compute probabilities
+        #wylosowane termy na podstawie prawdopodobienstwa
+        unlistTerms <- unlist(removeUsedTerms(terms, rule.used_attributes))
+        size <- length(unlistTerms)
+        drawnTerms <- sample(unlistTerms, size, FALSE, unlist(removeUsedTerms(probabilities, rule.used_attributes)))
+        isMinCasesPerRule<-FALSE
+        for(q in 1:size) {
+          #wybierz z wylosowanych term'ow term ktory nie nalezy do
+          #atrybutow juz wybranych
+          attribute_id <- getAttributeId(terms, drawnTerms[q])
+
+          coveredCases<-trainingSet2[get(columnNames[attribute_id]) == drawnTerms[q]]
+
+          #jesli tymczasowa regula spelnia wymagania liczby pokrytych przypadkow
+          #to powiekszamy regule o wybrany term, przerywamy petle wybierania
+          #wylosowanych termow
+          if(nrow(coveredCases) >= MinCasesPerRule) {
+            rule[[1]][addedTermIndex]<-drawnTerms[q]
+            rule.used_attributes[attribute_id]<-0
+            sum.used_attributes<-sum(rule.used_attributes)
+            rule[[2]][addedTermIndex]<-attribute_id
+            isMinCasesPerRule<-TRUE
+            trainingSet2<-coveredCases
+            addedTermIndex<-addedTermIndex+1
+            break
+          }
+        }
+        #moze sie zdarzyc ze po wyjsciu z petli for dodajacej termy
+        #nie zostanie dodany zaden term (bo nie spelni warunku pokrycia
+        #wystarczajacej liczby przypadkow)
       }
-      list<- prune(list[[1]], list[[2]], trainingSet, class);
-      rule <- list[[1]]
-      print("regula")
-      print(rule)
-      al <- list[[2]]
-      #update pheromone
-      quality <- quality(rule, al, trainingSet, class);
-      pheromone <- increasePheromone(terms, rule, al, pheromone, quality);
-      pheromone <- decreasePheromone(pheromone);
-      print("ostatnia regula")
-      print(tail(rules,1))
-      #if(isEqualRule(rule, tail(rules, (NumberOfRulesConverge-1)))) {
-      if(isEqualRule(rule, tail(rules, 1))) {
+
+      #nie udalo sie dodac termu, za malo pokrytych przypadkow
+      if(addedTermIndex == 1) {
+        rule<-NULL
+      } else {
+        rule[[1]][addedTermIndex]<-majorClassb(trainingSet2, class)
+        rule[[1]]<-rule[[1]][rule[[1]] != ""]
+        rule[[2]][addedTermIndex]<-maxAttributes+1
+        rule[[2]]<-rule[[2]][rule[[2]] != 0]
+      }
+
+      trainingSet2<-NULL
+      #####koniec budowy reguly
+
+      #jesli regula jest null to znaczy ze nie spelnila warunku MinCasesPerRule
+      #w takim przypadku juz wiecej regul nie powstanie
+      if(is.null(rule)) {
+        break
+      }
+
+      ########przycinanie reguly##############################
+      isBetterQuality <- TRUE;
+      rule[[3]] <- quality(rule, trainingSet, class, columnNames)
+      n<-length(rule[[2]])
+      while( n > 2 & isBetterQuality) {
+        qualities<-sapply(1:(n-1), function(k) {quality(removeTerm(rule,k), trainingSet, class, columnNames)})
+        id<- which.max(qualities)
+        maxquality <- qualities[id]
+        if(maxquality >= rule[[3]]) {
+          rule[[1]]<-rule[[1]][-id]
+          rule[[2]]<-rule[[2]][-id]
+          rule[[3]] <- maxquality
+          n<-length(rule[[2]])
+        } else {
+          isBetterQuality <- FALSE;
+        }
+
+      }
+
+      rule[[1]][n]<-majorClass(coveredCases(rule[[1]], rule[[2]], trainingSet, columnNames), class, trainingSet)
+      ########koniec przycinanie reguly
+
+      #########zwiekszamy feromon####################
+      for(q in 1:(n-1)) {
+        attributeId<-rule[[2]][q]
+        term<-rule[[1]][q]
+        termid<-which(names(pheromones[[attributeId]])==term)
+        pheromones[[attributeId]][termid]<-pheromones[[attributeId]][termid] + (pheromones[[attributeId]][termid]*rule[[3]])
+      }
+      #########koniec zwieksz feromon
+      #########zmniejsz feromon######################
+      pheromones_sum<-sum(sapply(pheromones, function(x) {sum(x)}))
+      pheromones<-lapply(pheromones, function(x) {sapply(x, function(pheromone){pheromone/pheromones_sum})})
+      #########koniec zmniejsz feromon
+
+      #Lepiej zmianic na wykrywanie czy stworzyl jakas nowa regule
+      #w n poprzednich krokach niz to
+      if(isEqualRule(rule, rules)) {
         j <- j+1;
       } else {
         j <- 1;
-        rules[[length(rules)+1]]<-rule;
-        als[[length(als)+1]]<-al;
-        qualities <- append(qualities,quality);
+        size_rules<-length(rules)+1
+        rules[[size_rules]]<-rule
+        rules_qualities[[size_rules]]<-rule[[3]]
       }
-      print("convergence")
-      print(j)
       i<-i+1;
     }
+
     #jesli lista regul jest pusta to znaczy ze algorytm nie potrafil podczas
     #NumberOfAnts prób stworzyc reguly
     #dzieje sie tak zwykle gdy liczba przypadkow jest zbyt mala dla pewnych parametrow
     #algorytmu, w takim przypadku nalezy zakonczyc algorytm
-    if(length(rules)!=0) {
-      bestRule <- bestRule(rules, als, qualities);
+    if(length(rules)>0) {
+      max_quality_id<-which.max(rules_qualities)
+      bestRule <- rules[[max_quality_id]]
       discoveredRules[[length(discoveredRules)+1]]<-bestRule
-      trainingSet<-uncoveredCases(bestRule[[1]],bestRule[[2]], trainingSet, class)
+      a<-coveredCases(bestRule[[1]], bestRule[[2]], trainingSet, columnNames)
+      trainingSet<-trainingSet[-a]
+      #trainingSet<-trainingSet[-coveredCases5(bestRule[[1]], bestRule[[2]], trainingSet, columnNames)]
     } else {
       print("przerywam algorytm")
       break;
     }
-    #print(nrow(trainingSet))
   }
-  default <- majorClass(trainingSet, class)
-  model <- list(discoveredRules, default)
+  defaultClass <- majorClassb(trainingSet, class)
+  model <- list(discoveredRules, defaultClass)
   class(model)<-"antminer"
   return(model)
-
 }
 
-#sprawdza czy w zbiorze regul jest juz taka regula
-isEqualRule <-function(rule, rules) {
-  n<-length(rules)
-  e<-sapply(rules, function(x) {isEqual(rule,x)})
-  if(length(e)==0) {
-    return(FALSE)
-  }
-  if(sum(e) > 0) {
-    return(TRUE)
-  } else {
-    return(FALSE)
-  }
+#zwraca wszystkie termy na podstawie danych treningowych
+#dane treningowe musza byc bez kolumny z atrybutem decyzyjnym
+#bo w innym razie zwrocilby takze termy w postaci atrybutow decyzyjnych
+getTerms<-function(trainingSet) {
+  #zwraca unikalne wartości z każdej kolumny danych treningowych
+  #2 oznacza ze operuje na kolumnach, 1 by oznaczala ze na wierszach
+  terms<-apply(trainingSet, 2, unique)
+  #lapply(terms, function(x) {sapply(x, function(term) {namedTerm(term, x)})})
+  #lapply(terms, function(x) {sapply(x, function(term) {term}, USE.NAMES = FALSE)})
+  lapply(1:length(terms), function(x) {lapply(terms[[x]], function(term) {namedTerm(term, terms[x])})})
 }
 
-#przypadki ze zbioru ktorych regula nie pokrywa
-uncoveredCases <- function(rule, al, trainingSet, class) {
-  n <- length(rule)
-  temp <- NULL;
-  for(i in 1:n) {
-    if(i < 2) {
-      temp<-(trainingSet[al[i]]!=rule[i])
-    } else if(i > 1 & i < n) {
-      temp<-temp | (trainingSet[al[i]]!=rule[i])
-    } else {
-      temp<-temp | (trainingSet[class]!=rule[i])
-    }
-  }
-  return(trainingSet[temp,])
+namedTerm<-function(term, terms) {
+  names(term)<-names(terms)
+  term
 }
 
-#zwraca najlepsza regule ze wzgledu na jakosc
-bestRule <- function(rules, als, qualities) {
-  id <- which.max(qualities);
-  print("najlepsza regula")
-  print(id)
-  print(rules)
-  list<-list(rules[[id]], als[[id]])
-  return(list)
+#Zwraca obliczona entropie dla kazdej pary atrybut-wartosc
+#pierwszy terms oznacza liste list wszystkich atrybutow
+#drugie terms oznacza liste atrybutu (jednego), czyli wartosci tego atrybutu
+computeEntropy <- function(terms, data, class) {
+  mapply(function(terms, index) {sapply(terms, function(x) {entropy(x, index, data, class)})}, terms, 1:length(terms), SIMPLIFY = FALSE)
 }
 
-#sprawdza czy reguly sa takie same
-isEqual <- function(rule1, rule2) {
-  n1 <- length(rule1);
-  n2 <- length(rule2);
-  if(n1 != n2) {
-    return(FALSE)
-  }
-  for(i in 1:n1) {
-    if(!is.element(rule1[i],rule2)) {
-      return(FALSE)
-    }
-  }
-  return(TRUE)
+#oblicza entropie danego terma, czyli entropie pary atrybut-wartosc
+entropy <- function(term, col, data, class) {
+  cases <- data[get(names(data)[col])==term, class, with=FALSE]
+  #data[which(data[col]==term),class]
+  freqs <- table(cases)/nrow(cases)
+  entropy.empirical(freqs, unit="log2");
 }
 
-#zwieksza feromon dla term'ow ktore znalazly sie w regule
-increasePheromone <- function(terms, rule, al, pheromone, quality) {
-  n<-length(pheromone)
-  for(i in 1:n) {
-    t <- terms[[i]];
-    id <- which(al == i);
-    term <- NULL;
-    if(length(id)!=0) {
-      term <- rule[id]
-    }
-    tempPheromone <- NULL;
-    for(j in 1:length(t)) {
-      term2 <- t[j]
-      if(!is.null(term)) {
-        oldPheromone <- pheromone[[i]][j]
-        tempPheromone[j] <- ifelse(term == term2, oldPheromone + (oldPheromone*quality), oldPheromone)
-      } else {
-        tempPheromone[j] <- pheromone[[i]][j]
-      }
-    }
-    pheromone[[i]] <- tempPheromone;
-  }
-  return(pheromone)
+#poczatkowy feromon to 1/liczba_wszystkich_wartosci (liczba wszystkich termow)
+#liczba odwrotnie proporcjonalna do liczby wartości wszystkich atrybutow
+initPheromone <- function(terms) {
+  initialPheromone <- 1/length(unlist(terms))
+  #lapply(terms, function(x) {sapply(x, function(y) {initialPheromone})})
+  lapply(terms, function(x) {sapply(x, function(y) {namedPheromone(y,initialPheromone)})})
+
+  #lapply(1:length(terms), function(i) {lapply(terms[[i]], function(y) {initialPheromone})})
 }
 
-#zmiejsza feromon dla wszystkich term'ow
-#symuluje wyparowywanie feromonu
-decreasePheromone <- function(pheromone) {
-  pheromoneSum <- pheromoneSum(pheromone)
-  for(i in 1:length(pheromone)) {
-    pheromone[[i]] <- sapply(pheromone[[i]], function(x) {x/pheromoneSum})
-  }
-  return(pheromone)
+namedPheromone<-function(term, pheromone) {
+  names(pheromone)<-term
+  return (pheromone)
 }
 
-#sumuje skladowe wektora feromonu
-pheromoneSum <- function(pheromone) {
-  sum <- 0;
-  for(i in 1:length(pheromone)) {
-    sum <- sum + sum(pheromone[[i]])
-  }
-  return(sum)
+removeUsedTerms<-function(terms, used_attributes) {
+  terms[which(used_attributes==0)]<-NULL
+  return (terms)
 }
-#przycina regule
-prune <- function(rule, al, trainingSet, class) {
-  isBetterQuality <- TRUE;
 
-  bestQuality <- quality(rule,al,trainingSet, class)
-  while( (length(rule) > 2) & isBetterQuality) {
-    qualities <- NULL;
-    n<-length(rule)
-    for(i in 1:(n-1)) {
-      tempRule <- rule[-i];
-      tempAl <- al[-i]
-      qualities[i] <- quality(tempRule, tempAl, trainingSet, class)
-    }
-    id<- which.max(qualities)
-    maxquality <- qualities[id]
-    if(maxquality > bestQuality) {
-      rule<-rule[-id]
-      al <- al[-id]
-      bestQuality <- maxquality
-    } else {
-      isBetterQuality <- FALSE;
-    }
-  }
-  rule<-rule[-(length(rule))]
-  cc <- coveredCases(rule, al, trainingSet)
-  rule["class"]<-majorClass(cc, class)
-  list<-list(rule,al)
 
-  return(list)
+#liczy znormalizowana entropie dla pary atrybut-wartosc (term)
+#mianownik (dominator) tej funkcji jest staly dla wszystkich termow
+#mozna by go liczyc tylko raz i podawac do funkcji???
+eta <- function(nr_of_class, entropies, entropy, used_attributes) {
+  counter <- log2(nr_of_class)-entropy;
+  dominator <- sum(used_attributes)*sum((log2(nr_of_class)-unlist(entropies)))
+  counter/dominator;
 }
+
+
+#zwraca id atrybutu ktorego wartoscia jest dany term
+getAttributeId <- function(terms, term) {
+  #min(which(sapply(terms, function(x) {is.element(term, x)}) == TRUE))
+  which(sapply(sapply(terms, function(x) {sapply(x, function(y) {checkEqualTerm(term, y)})}), function(row) {is.element(TRUE, row)}) == TRUE)
+}
+
+#sprawdza czy termy ma taka sama wartosc i nazwe
+checkEqualTerm<-function(term1, term2) {
+  term1 == term2 & names(term1) == names(term2)
+}
+
+#pokryte przez regule przypadki
+#zwraca liste wierszy z pokrytymi przypadkami
+coveredCases <- function(rule, rule.attributes, trainingSet, columnNames) {
+  Reduce(intersect, mapply(function(attribute, value) {trainingSet[get(columnNames[attribute]) == value, which=TRUE]}, rule.attributes, rule, SIMPLIFY = FALSE))
+}
+
+#Zwraca klase dominujaca w pokrytych przypadkach
+majorClass <- function(coveredCases, class, trainingSet) {
+  tt <- table(trainingSet[coveredCases, class, with=FALSE])
+  major <- names(tt[tt==max(tt)])
+  return(major[1])
+}
+
+#zwraca klase domunujaca w danym zbiorze danych treningowych
+majorClassb<-function(trainingSet, class) {
+  names(which.max(table(trainingSet[,class, with=FALSE])))
+}
+
+removeTerm<-function(rule, index) {
+  rule[[1]]<-rule[[1]][-index]
+  rule[[2]]<-rule[[2]][-index]
+  rule
+}
+
+getFilter<-function(rule) {
+  mapply(function(x,y) {})
+}
+
 #mierzy jakosc reguly
-quality <- function(rule, al, trainingSet, class) {
-  TP<-TP(rule, al, trainingSet, class)
-  FP<-FP(rule, al, trainingSet, class)
-  FN<-FN(rule, al, trainingSet, class)
-  TN<-TN(rule, al, trainingSet, class)
-  counter<- nrow(TP)*nrow(TN)
-  dominator <- (nrow(TP)+nrow(FN))*(nrow(FP)+nrow(TN))
-  quality <- counter/dominator;
+quality <- function(rule, trainingSet, class, columnNames) {
+  n<-length(rule[[1]])
+  predictedClass<-rule[[1]][n]
+  coveredIndex<-Reduce(intersect, mapply(function(x,y) {trainingSet[get(columnNames[y]) == x, which=TRUE]}, rule[[1]][-n], rule[[2]][-n], SIMPLIFY = FALSE))
+  #pokryte przypadki przez regule
+  cases<-trainingSet[coveredIndex]
+  tp<-nrow(cases[get(class) == predictedClass])
+  fp<-nrow(cases[get(class) != predictedClass])
+  #nie pokryte przypadki przez regule
+  cases<-trainingSet[-coveredIndex]
+  fn<-nrow(cases[get(class) == predictedClass])
+  tn<-nrow(cases[get(class) != predictedClass])
+
+  quality <- (tp/(tp+fn))*(tn/(fp+tn))
   #wzor na jakosc jest nie najlepszy bo mozna uzyskac dzielenie przez 0
   #jak spada nam liczba przypadkow treningowych to moze sie zdarzyc
   #ze choc jedna z powyzszych 4 wartosci bedzie 0
@@ -255,292 +348,32 @@ quality <- function(rule, al, trainingSet, class) {
   #dziwne ze nie ujeli tego w artykule
   #na razie jakosc ustawie na 0
   #jakosc wplywa na zmiane feromonu wiec jest to dosc wazne
+  #Poprawka
+  #TP nie moze byc zero
+  #TN moze byc zero
+  #powinien byc tylko pierwszy czlon, drugi z TN do usuniecia w mojej wersji
+  #mysle tez ze nie da sie uzyskac na koniec innej klasy
+  #bo caly czas badamy jakosc reguly na podstawie klasy ktora wywnioskowalismy
+  #nie wybierzemy gorszej jakosci czyli reguly w ktorej inna klasa bedzie domuniujaca!!
   if(is.nan(quality)) {
     return(0)
   }
+
   return(quality)
 }
 
-#True Positive
-TP <- function(rule, al, trainingSet, class) {
-  n <- length(rule)
-  temp <- NULL;
-  for(i in 1:n) {
-    if(i < 2) {
-      temp<-(trainingSet[al[i]]==rule[i])
-    } else if(i > 1 & i < n) {
-      temp<-temp & (trainingSet[al[i]]==rule[i])
-    } else {
-      temp<-temp & (trainingSet[class]==rule[i])
-    }
+
+#sprawdza czy reguly sa takie same
+isEqualRule <- function(rule1, rules) {
+  if(length(rules)==0) {
+    return (FALSE)
   }
-  return(trainingSet[temp,])
+  rule2<-rules[[length(rules)]]
+  #funkcja all sprawdza czy wszystkie wartosci sa TRUE, jestli tak to zwraca TRUE
+  all(mapply(function(term, attributeId) {is.element(term, rule2[[1]]) & is.element(attributeId, rule2[[2]])}, rule1[[1]], rule1[[2]]))
 }
 
-#False Positive
-FP <- function(rule, al, trainingSet, class) {
-  n <- length(rule)
-  temp <- NULL;
-  for(i in 1:n) {
-    if(i < 2) {
-      temp<-(trainingSet[al[i]]==rule[i])
-    } else if(i > 1 & i < n) {
-      temp<-temp & (trainingSet[al[i]]==rule[i])
-    } else {
-      temp<-temp & (trainingSet[class]!=rule[i])
-    }
-  }
-  return(trainingSet[temp,])
-}
 
-#False Negative
-FN <- function(rule, al, trainingSet, class) {
-  n <- length(rule)
-  temp <- NULL;
-  for(i in 1:n) {
-    if(i < 2) {
-      temp<-(trainingSet[al[i]]!=rule[i])
-    } else if(i > 1 & i < n) {
-      temp<-temp | (trainingSet[al[i]]!=rule[i])
-    } else {
-      temp<-temp & (trainingSet[class]==rule[i])
-    }
-  }
-  return(trainingSet[temp,])
-}
-
-#True Negative
-TN <- function(rule, al, trainingSet, class) {
-  n <- length(rule)
-  temp <- NULL;
-  for(i in 1:n) {
-    if(i < 2) {
-      temp<-(trainingSet[al[i]]!=rule[i])
-    } else if(i > 1 & i < n) {
-      temp<-temp | (trainingSet[al[i]]!=rule[i])
-    } else {
-      temp<-temp & (trainingSet[class]!=rule[i])
-    }
-  }
-  return(trainingSet[temp,])
-}
-#oblicza prawdopodobienstwo kazdego term'a
-probability <- function(terms, pheromone, eta, a) {
-  probability <- list();
-  for(i in 1:length(terms)) {
-    part <- sapply(eta[[i]], function(x) {x/(sum(a)*sum(pheromone[[i]]*eta[[i]]))})
-    probability[[i]] <- part*pheromone[[i]];
-  }
-  return(probability)
-}
-#inicjuje feromon kazdego term'a poczatkowa wartoscia
-initPheromone <- function(terms) {
-  pheromone <- list();
-  for(i in 1:length(terms)) {
-    pheromone[[i]] <- sapply(terms[[i]], function(x) {initialAmountOfPheromone(terms)})
-  }
-  return(pheromone)
-}
-#poczatkowa wartosc feromonu
-initialAmountOfPheromone <- function(terms) {
-  numberOfValues <- NULL;
-  for(i in 1:length(terms)) {
-    numberOfValues[i]<-length(terms[[i]]);
-  }
-  return(1/sum(numberOfValues))
-}
-#wektor wskazujacy ktore atrybuty znajduja sie w tymczasowej regule
-a <- function(cpr, n) {
-  if(is.null(cpr)) {
-    return(rep(1,n));
-  } else {
-    a<-NULL;
-    for(i in 1:n) {
-      if(is.element(i,cpr)) {
-        a<-append(a,0);
-      } else {
-        a<-append(a,1);
-      }
-    }
-    return(a)
-  }
-}
-#lista wartosci NA o rozmiarze jak lista term'ow
-NAList <- function(terms) {
-  list<-list();
-  for(i in 1:length(terms)) {
-    list[[i]]<-rep(NA, length(terms[[i]]))
-  }
-  return(list)
-}
-#buduje regule
-build.rule <- function(trainingSet, terms, MinCasesPerRule, class, k, n, entropy, pheromone) {
-  start.time <- Sys.time()
-  maxAttributes <- length(terms)
-  #current partial rule
-  #empty at the beggining
-  cpr <- NULL;
-  #attribute list
-  #what attributes are in cpr
-  al <- NULL;
-  #any term to be added to the rule would make the rule cover a number
-  #of cases smaller then Min_cases_per_rule
-  covered_cases_flag = TRUE;
-  #All attributes have already been used by ant
-  attributes_flag = TRUE;
-  #variables <- unlist(terms)
-  print("inicjalizacja argumentow - przed while")
-  print(start.time-Sys.time())
-  while(covered_cases_flag && attributes_flag) {
-    addedTerm_flag <- FALSE;
-    #draw term based on probabilities
-    eta <- computeEta(k, entropy, a(cpr,n))
-    print("obliczone eta")
-    print(start.time-Sys.time())
-    probability <- probability(terms, pheromone, eta, a(cpr,n))
-    print("obliczone probabilities")
-    print(start.time-Sys.time())
-    prob <- unlist(removeUsedTerms(probability,al))
-    size <- length(prob)
-    browser()
-    variables<-unlist(removeUsedTerms(terms, al))
-    drawTerms <- sample(variables, size , FALSE, prob)
-    print("wylosowane termy")
-    print(start.time-Sys.time())
-    for(i in 1:size) {
-      print(size)
-      print(i)
-      id <-getAttributeId(terms, drawTerms[i])
-      print("wybrany term")
-      print(start.time-Sys.time())
-
-      print("przed pokryciem przypadkow")
-      print(start.time-Sys.time())
-      coveredCases <- coveredCases2(drawTerms[i], id, trainingSet)
-      print("po pokryciu przypadkow")
-      print(start.time-Sys.time())
-      if(nrow(coveredCases) >= MinCasesPerRule) {
-        cpr <- append(cpr,drawTerms[i])
-        al <- append(al, id)
-        addedTerm_flag <- TRUE;
-        trainingSet<-coveredCases
-        break
-      }
-    }
-    if(length(al) == maxAttributes) {
-      attributes_flag <- FALSE;
-    }
-    if(!addedTerm_flag) {
-      covered_cases_flag <- FALSE;
-    }
-  }
-  if(is.null(cpr)) {
-    return(NULL)
-  }
-  cpr["class"]<-majorClass(coveredCases,class)
-  list<-list(cpr,al)
-  return(list)
-}
-
-removeUsedTerms<-function(terms, al) {
-  terms[al]<-NULL
-  return (terms)
-}
-
-#zwraca klase dominujaca dla podanych przypadkow
-majorClass <- function(coveredCases, class) {
-  sub <- coveredCases[, class]
-  tt <- table(sub)
-  major <- names(tt[tt==max(tt)])
-  return(major[1])
-}
-#pokryte przez regule przypadki
-coveredCases <- function(rule, al,data) {
-  sub <- data;
-  for(i in 1:length(rule)) {
-    sub <- subset(sub, sub[al[i]] == rule[i]);
-  }
-  return(sub)
-}
-
-coveredCases2<-function(drawnTerm, attribute_id, trainingSet) {
-  trainingSet[which(trainingSet[attribute_id]==drawnTerm),]
-}
-#losowanie term'a
-chooseTerm <- function(terms, probability) {
-  print("losowanie termu z listy")
-  print(unlist(terms))
-  print("prawdopodobienstwo termow")
-  print(probability)
-  term <- sample(unlist(terms), 1, FALSE, unlist(probability))
-  return(term)
-}
-#zwraca id atrybutu ktorego wartoscia jest dany term
-getAttributeId <- function(terms, term) {
-  for(i in 1:length(terms)) {
-    if(is.element(term, terms[[i]])) {
-      return(i)
-    }
-  }
-}
-#lista wszystkich mozliwych term'ow na podstawie zbioru danych
-getTerms <- function(data) {
-  allterms <- apply(data, 2, unique);
-}
-#heurystyka
-eta <- function(k, entropies, entropy, a) {
-  counter <- log2(k)-entropy;
-  dominator <- sum(a)*sum((log2(k)-entropies))
-  eta<- counter/dominator;
-  return(eta)
-}
-#oblicza heurystyke dla kazdego terma
-computeEta <- function(k, entropy, a) {
-  n<-length(entropy);
-  eta <- list();
-  for(i in 1:n) {
-    e <- sapply(entropy[[i]], function(x) {eta(k,entropy[[i]],x, a)})
-    eta[[i]] <- e;
-  }
-  return(eta)
-}
-#oblicza entropie dla kazdego terma
-computeEntropy <- function(terms, data, class) {
-  #print("terms")
-  #print(terms)
-  E <- list();
-  m <- vector("list", length=14);
-  n<-length(terms);
-  #print("N")
-  #print(n)
-  for(i in 1:n) {
-    #browser()
-    a <- terms[1]
-    b <- terms[[1]]
-    entropies <- sapply(terms[[i]], function(x) {entropy(x,i,data, class)})
-    #browser()
-    E[[i]] <- entropies;
-    m[i] <- entropies;
-    #browser()
-  }
-  return(E)
-}
-#entropia
-entropy <- function(term, col, data, class) {
-  #print("term")
-  #print(term)
-  #print("col")
-  #print(col)
-  cases <- data[data[col]==term,class]
-  #print("cases")
-  #print(cases)
-  freqs <- table(cases)/length(cases)
-  #print("freqs")
-  #print(freqs)
-  entropy <- entropy.empirical(freqs, unit="log2");
-  #browser()
-  return(entropy)
-}
 #wnioskowanie klas danych na podstawie modelu
 predict.antminer <- function(model, data) {
   discoveredRules <- model[[1]]

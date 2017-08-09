@@ -166,7 +166,7 @@ antminer5_results_breast_cancer_wisconsin_run3[3, 1]<-c("naive bayes")
 antminer5_results_breast_cancer_wisconsin_run3[4, 1]<-c("cart")
 antminer5_results_breast_cancer_wisconsin_run3[5, 1]<-c("antminer4")
 antminer5_results_breast_cancer_wisconsin_run3[6, 1]<-c("antminer5")
-antminer5_results_breast_cancer_wisconsin_run3[7, 1]<-c("antminer6")
+antminer5_results_breast_cancer_wisconsin_run3[7, 1]<-c("antminer7")
 
 starttime<-Sys.time()
 for(i in 1:loop_size) {
@@ -211,11 +211,17 @@ for(i in 1:loop_size) {
   antminer5_breast_cancer_wisconsin_conf_ant5_run3 <- confusionMatrix(antminer5_breast_cancer_wisconsin_tab_ant5_run3)
   antminer5_results_breast_cancer_wisconsin_run3[6, i+1]<-c(antminer5_breast_cancer_wisconsin_conf_ant5_run3$overall['Accuracy'])
 
-  antminer5_breast_cancer_wisconsin_model_ant6_run3 <- antminer6(antminer5_trainset_breast_cancer_wisconsin_run3, "Class", 10, 1000, 10, 10)
-  antminer5_breast_cancer_wisconsin_result_ant6_run3 <- predict.antminer6(antminer5_breast_cancer_wisconsin_model_ant6_run3, subset(antminer5_testset_breast_cancer_wisconsin_run3, select=-Class))
-  antminer5_breast_cancer_wisconsin_tab_ant6_run3<-conf_matrix_table(antminer5_breast_cancer_wisconsin_result_ant6_run3$class, antminer5_testset_breast_cancer_wisconsin_run3$Class)
-  antminer5_breast_cancer_wisconsin_conf_ant6_run3 <- confusionMatrix(antminer5_breast_cancer_wisconsin_tab_ant6_run3)
-  antminer5_results_breast_cancer_wisconsin_run3[7, i+1]<-c(antminer5_breast_cancer_wisconsin_conf_ant6_run3$overall['Accuracy'])
+  # antminer5_breast_cancer_wisconsin_model_ant6_run3 <- antminer6(antminer5_trainset_breast_cancer_wisconsin_run3, "Class", 10, 1000, 10, 10)
+  # antminer5_breast_cancer_wisconsin_result_ant6_run3 <- predict.antminer6(antminer5_breast_cancer_wisconsin_model_ant6_run3, subset(antminer5_testset_breast_cancer_wisconsin_run3, select=-Class))
+  # antminer5_breast_cancer_wisconsin_tab_ant6_run3<-conf_matrix_table(antminer5_breast_cancer_wisconsin_result_ant6_run3$class, antminer5_testset_breast_cancer_wisconsin_run3$Class)
+  # antminer5_breast_cancer_wisconsin_conf_ant6_run3 <- confusionMatrix(antminer5_breast_cancer_wisconsin_tab_ant6_run3)
+  # antminer5_results_breast_cancer_wisconsin_run3[7, i+1]<-c(antminer5_breast_cancer_wisconsin_conf_ant6_run3$overall['Accuracy'])
+
+  antminer5_breast_cancer_wisconsin_model_ant7_run3 <- antminer7(antminer5_trainset_breast_cancer_wisconsin_run3, "Class", 10, 1000, 10, 10)
+  antminer5_breast_cancer_wisconsin_result_ant7_run3 <- predict.antminer7(antminer5_breast_cancer_wisconsin_model_ant7_run3, subset(antminer5_testset_breast_cancer_wisconsin_run3, select=-Class))
+  antminer5_breast_cancer_wisconsin_tab_ant7_run3<-conf_matrix_table(antminer5_breast_cancer_wisconsin_result_ant7_run3$class, antminer5_testset_breast_cancer_wisconsin_run3$Class)
+  antminer5_breast_cancer_wisconsin_conf_ant7_run3 <- confusionMatrix(antminer5_breast_cancer_wisconsin_tab_ant7_run3)
+  antminer5_results_breast_cancer_wisconsin_run3[7, i+1]<-c(antminer5_breast_cancer_wisconsin_conf_ant7_run3$overall['Accuracy'])
 }
 
 print('czas wykonania')

@@ -83,7 +83,7 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
       #drugi element to vektor numerow atrybutow, aby wiedziec o kolejnosci atrybutow w regule
       #powie nam ktory atrybut byl dodany kiedy tylko
       #czy byl w ogole wykorzystany
-      rule <- list( character(maxAttributes), numeric(maxAttributes) )
+      rule <- list( character(maxAttributes), numeric(maxAttributes), 0 )
       #informacja o tym ktory atrybut zostal juz uzyty do stworzenia reguly
       #vector sklada sie z tylu elementow ile jest atrybutow
       #element moze przyjac 0 co oznacza ze atrybut zostal juz wykorzystany
@@ -103,8 +103,6 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
         #some prob can be 0
         #adding 1 to all prob solves this problem
         probabilities <- mapply(function(x, y) {mapply(function(eta, pheromone) {( (eta*pheromone)/(sum.used_attributes*sum(x*y)) ) + 1}, x, y)}, etas, pheromones)
-        print(probabilities)
-        browser()
         #######koniec compute probabilities
         #wylosowane termy na podstawie prawdopodobienstwa
         unlistTerms <- unlist(removeUsedTerms4(terms, rule.used_attributes))
@@ -141,7 +139,7 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
       if(addedTermIndex == 1) {
         rule<-NULL
       } else {
-        rule[[1]][addedTermIndex]<-majorClass24(trainingSet2, class)
+        rule[[1]][addedTermIndex]<-majorClassb4(trainingSet2, class)
         rule[[1]]<-rule[[1]][rule[[1]] != ""]
         rule[[2]][addedTermIndex]<-maxAttributes+1
         rule[[2]]<-rule[[2]][rule[[2]] != 0]
@@ -158,23 +156,22 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
 
       ########przycinanie reguly##############################
       isBetterQuality <- TRUE;
-      bestQuality <- quality4(rule, trainingSet, class, columnNames)
+      rule[[3]] <- quality4(rule, trainingSet, class, columnNames)
       n<-length(rule[[2]])
       while( n > 2 & isBetterQuality) {
         qualities<-sapply(1:(n-1), function(k) {quality4(removeTerm4(rule,k), trainingSet, class, columnNames)})
         id<- which.max(qualities)
         maxquality <- qualities[id]
-        if(maxquality > bestQuality) {
+        if(maxquality >= rule[[3]]) {
           rule[[1]]<-rule[[1]][-id]
           rule[[2]]<-rule[[2]][-id]
-          bestQuality <- maxquality
+          rule[[3]] <- maxquality
           n<-length(rule[[2]])
         } else {
           isBetterQuality <- FALSE;
         }
 
       }
-
 
       rule[[1]][n]<-majorClass4(coveredCases4(rule[[1]], rule[[2]], trainingSet, columnNames), class, trainingSet)
       ########koniec przycinanie reguly
@@ -184,7 +181,7 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
         attributeId<-rule[[2]][q]
         term<-rule[[1]][q]
         termid<-which(names(pheromones[[attributeId]])==term)
-        pheromones[[attributeId]][termid]<-pheromones[[attributeId]][termid] + (pheromones[[attributeId]][termid]*bestQuality)
+        pheromones[[attributeId]][termid]<-pheromones[[attributeId]][termid] + (pheromones[[attributeId]][termid]*rule[[3]])
       }
       #########koniec zwieksz feromon
       #########zmniejsz feromon######################
@@ -200,7 +197,7 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
         j <- 1;
         size_rules<-length(rules)+1
         rules[[size_rules]]<-rule
-        rules_qualities[[size_rules]]<-bestQuality
+        rules_qualities[[size_rules]]<-rule[[3]]
       }
       i<-i+1;
     }
@@ -213,16 +210,17 @@ antminer4 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
       max_quality_id<-which.max(rules_qualities)
       bestRule <- rules[[max_quality_id]]
       discoveredRules[[length(discoveredRules)+1]]<-bestRule
-      trainingSet<-trainingSet[-coveredCases4(bestRule[[1]], bestRule[[2]], trainingSet, columnNames)]
+      a<-coveredCases4(bestRule[[1]], bestRule[[2]], trainingSet, columnNames)
+      trainingSet<-trainingSet[-a]
+      #trainingSet<-trainingSet[-coveredCases5(bestRule[[1]], bestRule[[2]], trainingSet, columnNames)]
     } else {
       print("przerywam algorytm")
       break;
     }
   }
-  defaultClass <- majorClass24(trainingSet, class)
+  defaultClass <- majorClassb4(trainingSet, class)
   model <- list(discoveredRules, defaultClass)
   class(model)<-"antminer4"
-  print("dodaje klase")
   return(model)
 }
 
@@ -233,7 +231,7 @@ getTerms4<-function(trainingSet) {
   #zwraca unikalne wartości z każdej kolumny danych treningowych
   #2 oznacza ze operuje na kolumnach, 1 by oznaczala ze na wierszach
   terms<-apply(trainingSet, 2, unique)
-  #lapply(terms, function(x) {sapply(x, function(term) {namedTerm4(term, x)})})
+  #lapply(terms, function(x) {sapply(x, function(term) {namedTerm(term, x)})})
   #lapply(terms, function(x) {sapply(x, function(term) {term}, USE.NAMES = FALSE)})
   lapply(1:length(terms), function(x) {lapply(terms[[x]], function(term) {namedTerm4(term, terms[x])})})
 }
@@ -247,7 +245,7 @@ namedTerm4<-function(term, terms) {
 #pierwszy terms oznacza liste list wszystkich atrybutow
 #drugie terms oznacza liste atrybutu (jednego), czyli wartosci tego atrybutu
 computeEntropy4 <- function(terms, data, class) {
-  mapply(function(terms, index) {sapply(terms, function(x) {entropy4(x, index, data, class)})}, terms, 1:length(terms))
+  mapply(function(terms, index) {sapply(terms, function(x) {entropy4(x, index, data, class)})}, terms, 1:length(terms), SIMPLIFY = FALSE)
 }
 
 #oblicza entropie danego terma, czyli entropie pary atrybut-wartosc
@@ -278,6 +276,7 @@ removeUsedTerms4<-function(terms, used_attributes) {
   return (terms)
 }
 
+
 #liczy znormalizowana entropie dla pary atrybut-wartosc (term)
 #mianownik (dominator) tej funkcji jest staly dla wszystkich termow
 #mozna by go liczyc tylko raz i podawac do funkcji???
@@ -286,6 +285,7 @@ eta4 <- function(nr_of_class, entropies, entropy, used_attributes) {
   dominator <- sum(used_attributes)*sum((log2(nr_of_class)-unlist(entropies)))
   counter/dominator;
 }
+
 
 #zwraca id atrybutu ktorego wartoscia jest dany term
 getAttributeId4 <- function(terms, term) {
@@ -304,10 +304,6 @@ coveredCases4 <- function(rule, rule.attributes, trainingSet, columnNames) {
   Reduce(intersect, mapply(function(attribute, value) {trainingSet[get(columnNames[attribute]) == value, which=TRUE]}, rule.attributes, rule, SIMPLIFY = FALSE))
 }
 
-coveredCases2 <- function(drawnTerm, attribute_id, trainingSet) {
-  trainingSet[get(columnNames[attribute_id]) == drawnTerm]
-}
-
 #Zwraca klase dominujaca w pokrytych przypadkach
 majorClass4 <- function(coveredCases, class, trainingSet) {
   tt <- table(trainingSet[coveredCases, class, with=FALSE])
@@ -316,7 +312,7 @@ majorClass4 <- function(coveredCases, class, trainingSet) {
 }
 
 #zwraca klase domunujaca w danym zbiorze danych treningowych
-majorClass24<-function(trainingSet, class) {
+majorClassb4<-function(trainingSet, class) {
   names(which.max(table(trainingSet[,class, with=FALSE])))
 }
 
@@ -326,6 +322,9 @@ removeTerm4<-function(rule, index) {
   rule
 }
 
+getFilter4<-function(rule) {
+  mapply(function(x,y) {})
+}
 
 #mierzy jakosc reguly
 quality4 <- function(rule, trainingSet, class, columnNames) {
@@ -363,6 +362,7 @@ quality4 <- function(rule, trainingSet, class, columnNames) {
   return(quality)
 }
 
+
 #sprawdza czy reguly sa takie same
 isEqualRule4 <- function(rule1, rules) {
   if(length(rules)==0) {
@@ -373,16 +373,32 @@ isEqualRule4 <- function(rule1, rules) {
   all(mapply(function(term, attributeId) {is.element(term, rule2[[1]]) & is.element(attributeId, rule2[[2]])}, rule1[[1]], rule1[[2]]))
 }
 
+
 #wnioskowanie klas danych na podstawie modelu
 predict.antminer4 <- function(model, data) {
   discoveredRules <- model[[1]]
   defaultClass <- model[[2]]
   test<-apply(data,1, function(x) {
     result <- sapply(discoveredRules, function(y) {isCoveredByRule4(y,x)})
-    coveredRules<-which(result == TRUE)
+    coveredRules<-discoveredRules[which(result == TRUE)]
+
     if(length(coveredRules)!=0) {
-      id<-coveredRules[1]
-      rule <- discoveredRules[[id]][[1]];
+      #drugie kryterium - jakosc reguly
+      #wybieramy reguly o najwyzszej jakosci
+      rules_qualities<-sapply(coveredRules, function(rule) {rule[[3]]})
+      max_quality<-max(rules_qualities)
+      coveredRules<-coveredRules[which(rules_qualities == max_quality)]
+      #pierwsze kryterium - najdluzsze reguly
+      #Wybieramy reguly najbardziej pasujace
+      rules_lengths<-sapply(coveredRules, function(rule) {length(rule[[1]])} )
+      max_length<-max(rules_lengths)
+      coveredRules<-coveredRules[which(rules_lengths == max_length)]
+
+
+      #trzecie kryterium - kolejnosc reguly
+      #wybieramy regule ktora zostala dodana wczesniej
+
+      rule <- coveredRules[[1]][[1]];
       class <- tail(rule, 1)
       x["class"]<-class
     } else {

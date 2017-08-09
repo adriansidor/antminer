@@ -14,7 +14,7 @@ antminer5_results_nursery_run1[3, 1]<-c("naive bayes")
 antminer5_results_nursery_run1[4, 1]<-c("cart")
 antminer5_results_nursery_run1[5, 1]<-c("antminer4")
 antminer5_results_nursery_run1[6, 1]<-c("antminer5")
-antminer5_results_nursery_run1[7, 1]<-c("antminer6")
+antminer5_results_nursery_run1[7, 1]<-c("antminer7")
 
 starttime<-Sys.time()
 for(i in 1:loop_size) {
@@ -140,6 +140,7 @@ antminer5_results_nursery_run2
 
 
 ###########################
+loop_size<-10
 antminer5_nursery_folds_run3 <- createFolds(nursery$application, k = loop_size, returnTrain = TRUE)
 
 #data frame with all results
@@ -150,53 +151,52 @@ antminer5_results_nursery_run3[3, 1]<-c("naive bayes")
 antminer5_results_nursery_run3[4, 1]<-c("cart")
 antminer5_results_nursery_run3[5, 1]<-c("antminer4")
 antminer5_results_nursery_run3[6, 1]<-c("antminer5")
-antminer5_results_nursery_run3[7, 1]<-c("antminer6")
+antminer5_results_nursery_run3[7, 1]<-c("antminer7")
 
 starttime<-Sys.time()
 for(i in 1:loop_size) {
   antminer5_trainset_nursery_run3<-nursery[ antminer5_nursery_folds_run3[[i]] ,]
   antminer5_testset_nursery_run3<-nursery[ -antminer5_nursery_folds_run3[[i]] ,]
+#
+#   antminer5_nursery_model_c50_run3 <- C5.0(application ~ ., data=antminer5_trainset_nursery_run3)
+#   antminer5_nursery_result_c50_run3 <- predict(object=antminer5_nursery_model_c50_run3, newdata=antminer5_testset_nursery_run3, type="class")
+#   antminer5_nursery_tab_c50_run3<-conf_matrix_table(antminer5_nursery_result_c50_run3, antminer5_testset_nursery_run3$application)
+#   antminer5_nursery_conf_c50_run3 <- confusionMatrix(antminer5_nursery_tab_c50_run3)
+#   antminer5_nursery_conf_c50_run3$overall['Accuracy']
+#   antminer5_results_nursery_run3[1, i+1]<-c(antminer5_nursery_conf_c50_run3$overall['Accuracy'])
+#
+#   antminer5_nursery_model_svm_run3 <- svm(application ~ ., data=antminer5_trainset_nursery_run3)
+#   antminer5_nursery_result_svm_run3 <- predict(object=antminer5_nursery_model_svm_run3, newdata=antminer5_testset_nursery_run3, type="class")
+#   antminer5_nursery_tab_svm_run3<-conf_matrix_table(antminer5_nursery_result_svm_run3, antminer5_testset_nursery_run3$application)
+#   antminer5_nursery_conf_svm_run3 <- confusionMatrix(antminer5_nursery_tab_svm_run3)
+#   antminer5_results_nursery_run3[2, i+1]<-c(antminer5_nursery_conf_svm_run3$overall['Accuracy'])
+#
+#   antminer5_nursery_model_bayes_run3 <- naiveBayes(x = subset(antminer5_trainset_nursery_run3, select=-application), y = antminer5_trainset_nursery_run3$application)
+#   antminer5_nursery_result_bayes_run3 <- predict(object = antminer5_nursery_model_bayes_run3, newdata = antminer5_testset_nursery_run3, type = "class")
+#   antminer5_nursery_tab_bayes_run3<-conf_matrix_table(antminer5_nursery_result_bayes_run3, antminer5_testset_nursery_run3$application)
+#   antminer5_nursery_conf_bayes_run3 <- confusionMatrix(antminer5_nursery_tab_bayes_run3)
+#   antminer5_results_nursery_run3[3, i+1]<-c(antminer5_nursery_conf_bayes_run3$overall['Accuracy'])
+#
+#   antminer5_nursery_model_rpart_run3 <- rpart(application ~ ., data=antminer5_trainset_nursery_run3)
+#   antminer5_nursery_result_rpart_run3 <- predict(object=antminer5_nursery_model_rpart_run3, newdata=antminer5_testset_nursery_run3, type="class")
+#   antminer5_nursery_tab6<-conf_matrix_table(antminer5_nursery_result_rpart_run3, antminer5_testset_nursery_run3$application)
+#   antminer5_nursery_conf_rpart_run3 <- confusionMatrix(antminer5_nursery_tab6)
+#   antminer5_results_nursery_run3[4, i+1]<-c(antminer5_nursery_conf_rpart_run3$overall['Accuracy'])
+#
+#   antminer5_nursery_model_ant4_run3 <- antminer4(antminer5_trainset_nursery_run3, "application", 10, 1000, 10, 10)
+#   antminer5_nursery_result_ant4_run3 <- predict.antminer4(antminer5_nursery_model_ant4_run3, subset(antminer5_testset_nursery_run3, select=-application))
+#   antminer5_nursery_tab_ant4_run3<-conf_matrix_table(antminer5_nursery_result_ant4_run3$class, antminer5_testset_nursery_run3$application)
+#   antminer5_nursery_conf_ant4_run3 <- confusionMatrix(antminer5_nursery_tab_ant4_run3)
+#   antminer5_results_nursery_run3[5, i+1]<-c(antminer5_nursery_conf_ant4_run3$overall['Accuracy'])
+#
+#   antminer5_nursery_model_ant5_run3 <- antminer5(antminer5_trainset_nursery_run3, "application", 10, 1000, 10, 10)
+#   antminer5_nursery_result_ant5_run3 <- predict.antminer5(antminer5_nursery_model_ant5_run3, subset(antminer5_testset_nursery_run3, select=-application))
+#   antminer5_nursery_tab_ant5_run3<-conf_matrix_table(antminer5_nursery_result_ant5_run3$class, antminer5_testset_nursery_run3$application)
+#   antminer5_nursery_conf_ant5_run3 <- confusionMatrix(antminer5_nursery_tab_ant5_run3)
+#   antminer5_results_nursery_run3[6, i+1]<-c(antminer5_nursery_conf_ant5_run3$overall['Accuracy'])
 
-  antminer5_nursery_model_c50_run3 <- C5.0(application ~ ., data=antminer5_trainset_nursery_run3)
-  antminer5_nursery_result_c50_run3 <- predict(object=antminer5_nursery_model_c50_run3, newdata=antminer5_testset_nursery_run3, type="class")
-  antminer5_nursery_tab_c50_run3<-conf_matrix_table(antminer5_nursery_result_c50_run3, antminer5_testset_nursery_run3$application)
-  antminer5_nursery_conf_c50_run3 <- confusionMatrix(antminer5_nursery_tab_c50_run3)
-  antminer5_nursery_conf_c50_run3$overall['Accuracy']
-  antminer5_results_nursery_run3[1, i+1]<-c(antminer5_nursery_conf_c50_run3$overall['Accuracy'])
-
-  antminer5_nursery_model_svm_run3 <- svm(application ~ ., data=antminer5_trainset_nursery_run3)
-  antminer5_nursery_result_svm_run3 <- predict(object=antminer5_nursery_model_svm_run3, newdata=antminer5_testset_nursery_run3, type="class")
-  antminer5_nursery_tab_svm_run3<-conf_matrix_table(antminer5_nursery_result_svm_run3, antminer5_testset_nursery_run3$application)
-  antminer5_nursery_conf_svm_run3 <- confusionMatrix(antminer5_nursery_tab_svm_run3)
-  antminer5_results_nursery_run3[2, i+1]<-c(antminer5_nursery_conf_svm_run3$overall['Accuracy'])
-
-  antminer5_nursery_model_bayes_run3 <- naiveBayes(x = subset(antminer5_trainset_nursery_run3, select=-application), y = antminer5_trainset_nursery_run3$application)
-  antminer5_nursery_result_bayes_run3 <- predict(object = antminer5_nursery_model_bayes_run3, newdata = antminer5_testset_nursery_run3, type = "class")
-  #antminer5_nursery_result_svm_run3 <- predict(object=antminer5_nursery_model_svm_run3, newdata=antminer5_testset_nursery_run3, type="class")
-  antminer5_nursery_tab_bayes_run3<-conf_matrix_table(antminer5_nursery_result_bayes_run3, antminer5_testset_nursery_run3$application)
-  antminer5_nursery_conf_bayes_run3 <- confusionMatrix(antminer5_nursery_tab_bayes_run3)
-  antminer5_results_nursery_run3[3, i+1]<-c(antminer5_nursery_conf_bayes_run3$overall['Accuracy'])
-
-  antminer5_nursery_model_rpart_run3 <- rpart(application ~ ., data=antminer5_trainset_nursery_run3)
-  antminer5_nursery_result_rpart_run3 <- predict(object=antminer5_nursery_model_rpart_run3, newdata=antminer5_testset_nursery_run3, type="class")
-  antminer5_nursery_tab6<-conf_matrix_table(antminer5_nursery_result_rpart_run3, antminer5_testset_nursery_run3$application)
-  antminer5_nursery_conf_rpart_run3 <- confusionMatrix(antminer5_nursery_tab6)
-  antminer5_results_nursery_run3[4, i+1]<-c(antminer5_nursery_conf_rpart_run3$overall['Accuracy'])
-
-  antminer5_nursery_model_ant4_run3 <- antminer4(antminer5_trainset_nursery_run3, "application", 10, 1000, 10, 10)
-  antminer5_nursery_result_ant4_run3 <- predict(antminer5_nursery_model_ant4_run3, subset(antminer5_testset_nursery_run3, select=-application))
-  antminer5_nursery_tab_ant4_run3<-conf_matrix_table(antminer5_nursery_result_ant4_run3$class, antminer5_testset_nursery_run3$application)
-  antminer5_nursery_conf_ant4_run3 <- confusionMatrix(antminer5_nursery_tab_ant4_run3)
-  antminer5_results_nursery_run3[5, i+1]<-c(antminer5_nursery_conf_ant4_run3$overall['Accuracy'])
-
-  antminer5_nursery_model_ant5_run3 <- antminer5(antminer5_trainset_nursery_run3, "application", 10, 1000, 10, 10)
-  antminer5_nursery_result_ant5_run3 <- predict(antminer5_nursery_model_ant5_run3, subset(antminer5_testset_nursery_run3, select=-application))
-  antminer5_nursery_tab_ant5_run3<-conf_matrix_table(antminer5_nursery_result_ant5_run3$class, antminer5_testset_nursery_run3$application)
-  antminer5_nursery_conf_ant5_run3 <- confusionMatrix(antminer5_nursery_tab_ant5_run3)
-  antminer5_results_nursery_run3[6, i+1]<-c(antminer5_nursery_conf_ant5_run3$overall['Accuracy'])
-
-  antminer5_nursery_model_ant6_run3 <- antminer6(antminer5_trainset_nursery_run3, "application", 10, 1000, 10, 10)
-  antminer5_nursery_result_ant6_run3 <- predict(antminer5_nursery_model_ant6_run3, subset(antminer5_testset_nursery_run3, select=-application))
+  antminer5_nursery_model_ant6_run3 <- antminer7(antminer5_trainset_nursery_run3, "application", 10, 1000, 10, 10)
+  antminer5_nursery_result_ant6_run3 <- predict.antminer7(antminer5_nursery_model_ant6_run3, subset(antminer5_testset_nursery_run3, select=-application))
   antminer5_nursery_tab_ant6_run3<-conf_matrix_table(antminer5_nursery_result_ant6_run3$class, antminer5_testset_nursery_run3$application)
   antminer5_nursery_conf_ant6_run3 <- confusionMatrix(antminer5_nursery_tab_ant6_run3)
   antminer5_results_nursery_run3[7, i+1]<-c(antminer5_nursery_conf_ant6_run3$overall['Accuracy'])
