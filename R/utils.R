@@ -41,6 +41,7 @@ load_libraries <- function() {
   library(data.table)
   #library(matlab)
   library(dplyr)
+  library(plyr)
 }
 
 install <- function() {

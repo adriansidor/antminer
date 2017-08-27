@@ -102,7 +102,7 @@ antminer2 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
         #######compute probabilities##########################
         #some prob can be 0
         #adding 1 to all prob solves this problem
-        probabilities <- mapply(function(x, y) {mapply(function(eta, pheromone) {( (eta*pheromone)/(sum.used_attributes*sum(x*y)) ) + 1}, x, y)}, etas, pheromones)
+        probabilities <- mapply(function(x, y) {mapply(function(eta, pheromone) {( (eta*pheromone)/(sum.used_attributes*sum(x*y)) ) + 1}, x, y, SIMPLIFY = FALSE)}, etas, pheromones, SIMPLIFY = FALSE)
         #######koniec compute probabilities
         #wylosowane termy na podstawie prawdopodobienstwa
         unlistTerms <- unlist(removeUsedTerms2(terms, rule.used_attributes))
@@ -230,10 +230,17 @@ antminer2 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
 getTerms2<-function(trainingSet) {
   #zwraca unikalne wartości z każdej kolumny danych treningowych
   #2 oznacza ze operuje na kolumnach, 1 by oznaczala ze na wierszach
-  terms<-apply(trainingSet, 2, unique)
-  #lapply(terms, function(x) {sapply(x, function(term) {namedTerm(term, x)})})
-  #lapply(terms, function(x) {sapply(x, function(term) {term}, USE.NAMES = FALSE)})
-  lapply(1:length(terms), function(x) {lapply(terms[[x]], function(term) {namedTerm2(term, terms[x])})})
+  terms2<-list()
+  for(i in 1:ncol(trainingSet)) {
+    u<-unique(trainingSet[,i, with=FALSE])
+    terms2[[i]]<-list()
+    for(j in 1:length(u[[1]])) {
+      terms2[[i]][[j]]<-as.character(u[[1]][[j]])
+      names(terms2[[i]][[j]])<-names(u)
+    }
+  }
+  #browser()
+  return(terms2)
 }
 
 namedTerm2<-function(term, terms) {
@@ -290,7 +297,7 @@ eta2 <- function(nr_of_class, entropies, entropy, used_attributes) {
 #zwraca id atrybutu ktorego wartoscia jest dany term
 getAttributeId2 <- function(terms, term) {
   #min(which(sapply(terms, function(x) {is.element(term, x)}) == TRUE))
-  which(sapply(sapply(terms, function(x) {sapply(x, function(y) {checkEqualTerm2(term, y)})}), function(row) {is.element(TRUE, row)}) == TRUE)
+  which(sapply(sapply(terms, function(x) {sapply(x, function(y) {checkEqualTerm2(term, y)}, simplify = FALSE)}, simplify = FALSE), function(row) {is.element(TRUE, row)}, simplify = FALSE) == TRUE)
 }
 
 #sprawdza czy termy ma taka sama wartosc i nazwe
@@ -366,7 +373,7 @@ isEqualRule2 <- function(rule1, rules) {
   }
   rule2<-rules[[length(rules)]]
   #funkcja all sprawdza czy wszystkie wartosci sa TRUE, jestli tak to zwraca TRUE
-  all(mapply(function(term, attributeId) {is.element(term, rule2[[1]]) & is.element(attributeId, rule2[[2]])}, rule1[[1]], rule1[[2]]))
+  all(mapply(function(term, attributeId) {is.element(term, rule2[[1]]) & is.element(attributeId, rule2[[2]])}, rule1[[1]], rule1[[2]], SIMPLIFY = FALSE))
 }
 
 

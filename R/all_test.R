@@ -396,6 +396,8 @@ nursery_conf_antminer3<-list()
 nursery_result_antminer4 <-list()
 nursery_conf_antminer4<-list()
 
+t<-1
+loop_size<-10
 for(t in 1:test) {
   folds <- createFolds(nursery$application, k = loop_size, returnTrain = TRUE)
   nursery_folds[[t]]<-folds
@@ -430,6 +432,7 @@ for(t in 1:test) {
   predict_time[7, 1]<-c("antminer3")
   predict_time[8, 1]<-c("antminer4")
 
+  loop_size<-1
   for(i in 1:loop_size) {
     trainset<-nursery[ folds[[i]] ,]
     testset<-nursery[ -folds[[i]] ,]
@@ -494,41 +497,41 @@ for(t in 1:test) {
     nursery_result_antminer[t][[i]]<-result_antminer
     nursery_conf_antminer[t][[i]]<-conf_antminer
 
-    starttime<-Sys.time()
-    model_antminer2 <- antminer2(trainset, "application", 10, 1000, 10, 10)
-    model_time[6, i+1]<-Sys.time()-starttime
-    starttime<-Sys.time()
-    result_antminer2 <- predict.antminer2(model_antminer2, subset(testset, select=-application))
-    predict_time[6, i+1]<-Sys.time()-starttime
-    tab_antminer2<-conf_matrix_table(result_antminer2$class, testset$application)
-    conf_antminer2 <- confusionMatrix(tab_antminer2)
-    results[6, i+1]<-c(conf_antminer2$overall['Accuracy'])
-    nursery_result_antminer2[t][[i]]<-result_antminer2
-    nursery_conf_antminer2[t][[i]]<-conf_antminer2
-
-    starttime<-Sys.time()
-    model_antminer3 <- antminer3(trainset, "application", 10, 1000, 10, 10)
-    model_time[7, i+1]<-Sys.time()-starttime
-    starttime<-Sys.time()
-    result_antminer3 <- predict.antminer3(model_antminer3, subset(testset, select=-application))
-    predict_time[7, i+1]<-Sys.time()-starttime
-    tab_antminer3<-conf_matrix_table(result_antminer3$class, testset$application)
-    conf_antminer3 <- confusionMatrix(tab_antminer3)
-    results[7, i+1]<-c(conf_antminer3$overall['Accuracy'])
-    nursery_result_antminer3[t][[i]]<-result_antminer3
-    nursery_conf_antminer3[t][[i]]<-conf_antminer3
-
-    starttime<-Sys.time()
-    model_antminer4 <- antminer4(trainset, "application", 10, 1000, 10, 10)
-    model_time[8, i+1]<-Sys.time()-starttime
-    starttime<-Sys.time()
-    result_antminer4 <- predict.antminer4(model_antminer4, subset(testset, select=-application))
-    predict_time[8, i+1]<-Sys.time()-starttime
-    tab_antminer4<-conf_matrix_table(result_antminer4$class, testset$application)
-    conf_antminer4 <- confusionMatrix(tab_antminer4)
-    results[8, i+1]<-c(conf_antminer4$overall['Accuracy'])
-    nursery_result_antminer4[t][[i]]<-result_antminer4
-    nursery_conf_antminer4[t][[i]]<-conf_antminer4
+    # starttime<-Sys.time()
+    # model_antminer2 <- antminer2(trainset, "application", 10, 1000, 10, 10)
+    # model_time[6, i+1]<-Sys.time()-starttime
+    # starttime<-Sys.time()
+    # result_antminer2 <- predict.antminer2(model_antminer2, subset(testset, select=-application))
+    # predict_time[6, i+1]<-Sys.time()-starttime
+    # tab_antminer2<-conf_matrix_table(result_antminer2$class, testset$application)
+    # conf_antminer2 <- confusionMatrix(tab_antminer2)
+    # results[6, i+1]<-c(conf_antminer2$overall['Accuracy'])
+    # nursery_result_antminer2[t][[i]]<-result_antminer2
+    # nursery_conf_antminer2[t][[i]]<-conf_antminer2
+    #
+    # starttime<-Sys.time()
+    # model_antminer3 <- antminer3(trainset, "application", 10, 1000, 10, 10)
+    # model_time[7, i+1]<-Sys.time()-starttime
+    # starttime<-Sys.time()
+    # result_antminer3 <- predict.antminer3(model_antminer3, subset(testset, select=-application))
+    # predict_time[7, i+1]<-Sys.time()-starttime
+    # tab_antminer3<-conf_matrix_table(result_antminer3$class, testset$application)
+    # conf_antminer3 <- confusionMatrix(tab_antminer3)
+    # results[7, i+1]<-c(conf_antminer3$overall['Accuracy'])
+    # nursery_result_antminer3[t][[i]]<-result_antminer3
+    # nursery_conf_antminer3[t][[i]]<-conf_antminer3
+    #
+    # starttime<-Sys.time()
+    # model_antminer4 <- antminer4(trainset, "application", 10, 1000, 10, 10)
+    # model_time[8, i+1]<-Sys.time()-starttime
+    # starttime<-Sys.time()
+    # result_antminer4 <- predict.antminer4(model_antminer4, subset(testset, select=-application))
+    # predict_time[8, i+1]<-Sys.time()-starttime
+    # tab_antminer4<-conf_matrix_table(result_antminer4$class, testset$application)
+    # conf_antminer4 <- confusionMatrix(tab_antminer4)
+    # results[8, i+1]<-c(conf_antminer4$overall['Accuracy'])
+    # nursery_result_antminer4[t][[i]]<-result_antminer4
+    # nursery_conf_antminer4[t][[i]]<-conf_antminer4
   }
   nursery_results[[t]]<-results
   nursery_model_time[[t]]<-model_time
@@ -537,6 +540,7 @@ for(t in 1:test) {
 
 mushroom <- read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data"), header = FALSE)
 names(mushroom) <- c("edibility", "cap-shape", "cap_surface", "cap_color", "bruises?", "odor", "gill_attachment", "gill_spacing", "gill_size", "gill_color", "stalk_shape", "stalk_root", "stalk_surface_above_ring", "stalk_surface_below_ring", "stalk_color_above_ring", "stalk_color_below_ring", "veil_type", "veil_color", "ring_number", "ring_type", "spore_print_color", "population", "habitat")
+mushroom <- mushroom[-17] #usuwanie atrybutu z jednym przypadkiem
 
 #10-fold-cross-validation
 #sprawdzian krzyzowy (10 krotna walidacja)
@@ -708,8 +712,12 @@ for(t in 1:test) {
   mushroom_predict_time[[t]]<-predict_time
 }
 
-tic_tac_toe <- read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/tic-tac-toe/tic-tac-toe.data"), header = FALSE)
+tic_tac_toe <- read.csv(url("http://archive.ics.uci.edu/ml/machine-learning-databases/dermatology/dermatology.data"), header = FALSE)
 names(tic_tac_toe) <- c("top-left-square", "top-middle-square", "top-right-square", "middle-left-square", "middle-middle-square", "middle-right-square", "bottom-left-square", "bottom-middle-square", "bottom-right-square", "Class")
+
+# for(i in 1:10) {
+#   tic_tac_toe[, i]<-as.factor(tic_tac_toe[, i])
+# }
 
 #10-fold-cross-validation
 #sprawdzian krzyzowy (10 krotna walidacja)
@@ -879,4 +887,382 @@ for(t in 1:test) {
   tic_tac_toe_results[[t]]<-results
   tic_tac_toe_model_time[[t]]<-model_time
   tic_tac_toe_predict_time[[t]]<-predict_time
+}
+
+dermatology <- read.csv(url("http://archive.ics.uci.edu/ml/machine-learning-databases/dermatology/dermatology.data"), header = FALSE)
+names(dermatology) <- c("erythema", "scaling", "definite borders", "itching", "koebner phenomenon", "polygonal papules", "follicular papules", "oral mucosal involvement", "knee and elbow involvement", "scalp involvement","family history","melanin incontinence","eosinophils in the infiltrate","PNL infiltrate","fibrosis of the papillary dermis","exocytosis","acanthosis","hyperkeratosis","parakeratosis","clubbing of the rete ridges","elongation of the rete ridges","thinning of the suprapapillary epidermis","spongiform pustule","munro microabcess","focal hypergranulosis","disappearance of the granular layer","vacuolisation and damage of basal layer","spongiosis","saw-tooth appearance of retes","follicular horn plug","perifollicular parakeratosis","inflammatory monoluclear inflitrate","band-like infiltrate","Age","diagnosis")
+#usuniecie przypadkow w ktorych brakuje danych
+remove_list<-which(dermatology[,34]=='?')
+dermatology<-dermatology[-remove_list,]
+# for(i in 1:10) {
+#   dermatology[, i]<-as.factor(dermatology[, i])
+# }
+dermatology$Age<-as.numeric(dermatology$Age)
+dermatology$Age <- cut(dermatology$Age, breaks = seq(0, 80, by = 10))
+
+for(i in 1:35) {
+  dermatology[, i]<-as.factor(dermatology[, i])
+}
+
+#10-fold-cross-validation
+#sprawdzian krzyzowy (10 krotna walidacja)
+dermatology_folds<-list()
+dermatology_results<-list()
+dermatology_model_time<-list()
+dermatology_predict_time<-list()
+
+dermatology_result_c50 <-list()
+dermatology_conf_c50<-list()
+
+dermatology_result_svm <-list()
+dermatology_conf_svm<-list()
+
+dermatology_result_bayes <-list()
+dermatology_conf_bayes<-list()
+
+dermatology_result_rpart <-list()
+dermatology_conf_rpart<-list()
+
+dermatology_result_antminer <-list()
+dermatology_conf_antminer<-list()
+
+dermatology_result_antminer2 <-list()
+dermatology_conf_antminer2<-list()
+
+dermatology_result_antminer3 <-list()
+dermatology_conf_antminer3<-list()
+
+dermatology_result_antminer4 <-list()
+dermatology_conf_antminer4<-list()
+
+for(t in 1:test) {
+  folds <- createFolds(dermatology$diagnosis, k = loop_size, returnTrain = TRUE)
+  dermatology_folds[[t]]<-folds
+  #data frame with all results
+  results <- as.data.frame(setNames(replicate(loop_size+1,numeric(0), simplify = F), c("algorithm", "accuracy")))
+  results[1, 1]<-c("C5.0")
+  results[2, 1]<-c("svm")
+  results[3, 1]<-c("naive bayes")
+  results[4, 1]<-c("cart")
+  results[5, 1]<-c("antminer")
+  results[6, 1]<-c("antminer2")
+  results[7, 1]<-c("antminer3")
+  results[8, 1]<-c("antminer4")
+
+  model_time <- as.data.frame(setNames(replicate(loop_size+1,numeric(0), simplify = F), c("algorithm", "accuracy")))
+  model_time[1, 1]<-c("C5.0")
+  model_time[2, 1]<-c("svm")
+  model_time[3, 1]<-c("naive bayes")
+  model_time[4, 1]<-c("cart")
+  model_time[5, 1]<-c("antminer")
+  model_time[6, 1]<-c("antminer2")
+  model_time[7, 1]<-c("antminer3")
+  model_time[8, 1]<-c("antminer4")
+
+  predict_time <- as.data.frame(setNames(replicate(loop_size+1,numeric(0), simplify = F), c("algorithm", "accuracy")))
+  predict_time[1, 1]<-c("C5.0")
+  predict_time[2, 1]<-c("svm")
+  predict_time[3, 1]<-c("naive bayes")
+  predict_time[4, 1]<-c("cart")
+  predict_time[5, 1]<-c("antminer")
+  predict_time[6, 1]<-c("antminer2")
+  predict_time[7, 1]<-c("antminer3")
+  predict_time[8, 1]<-c("antminer4")
+
+  for(i in 1:loop_size) {
+    trainset<-dermatology[ folds[[i]] ,]
+    testset<-dermatology[ -folds[[i]] ,]
+
+    starttime<-Sys.time()
+    model_c50 <- C5.0(diagnosis ~ ., data=trainset)
+    model_time[1, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_c50 <- predict(object=model_c50, newdata=testset, type="class")
+    predict_time[1, i+1]<-Sys.time()-starttime
+    tab_c50<-conf_matrix_table(result_c50, testset$diagnosis)
+    conf_c50 <- confusionMatrix(tab_c50)
+    results[1, i+1]<-c(conf_c50$overall['Accuracy'])
+    dermatology_result_c50[t][[i]]<-result_c50
+    dermatology_conf_c50[t][[i]]<-conf_c50
+
+    starttime<-Sys.time()
+    model_svm <- svm(diagnosis ~ ., data=trainset, type="C-classification")
+    model_time[2, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_svm <- predict(object=model_svm, newdata=testset)
+    predict_time[2, i+1]<-Sys.time()-starttime
+    tab_svm<-conf_matrix_table(result_svm, testset$diagnosis)
+    conf_svm <- confusionMatrix(tab_svm)
+    results[2, i+1]<-c(conf_svm$overall['Accuracy'])
+    dermatology_result_svm[t][[i]]<-result_svm
+    dermatology_conf_svm[t][[i]]<-conf_svm
+
+    starttime<-Sys.time()
+    model_bayes <- naiveBayes(x = subset(trainset, select=-diagnosis), y = trainset$diagnosis)
+    model_time[3, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_bayes <- predict(object = model_bayes, newdata = testset, type = "class")
+    predict_time[3, i+1]<-Sys.time()-starttime
+    tab_bayes<-conf_matrix_table(result_bayes, testset$diagnosis)
+    conf_bayes <- confusionMatrix(tab_bayes)
+    results[3, i+1]<-c(conf_bayes$overall['Accuracy'])
+    dermatology_result_bayes[t][[i]]<-result_bayes
+    dermatology_conf_bayes[t][[i]]<-conf_bayes
+
+    starttime<-Sys.time()
+    model_rpart <- rpart(diagnosis ~ ., data=trainset)
+    model_time[4, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_rpart <- predict(object=model_rpart, newdata=testset, type="class")
+    predict_time[4, i+1]<-Sys.time()-starttime
+    tab6<-conf_matrix_table(result_rpart, testset$diagnosis)
+    conf_rpart <- confusionMatrix(tab6)
+    results[4, i+1]<-c(conf_rpart$overall['Accuracy'])
+    dermatology_result_rpart[t][[i]]<-result_rpart
+    dermatology_conf_rpart[t][[i]]<-conf_rpart
+
+    starttime<-Sys.time()
+    model_antminer <- antminer(trainset, "diagnosis", 10, 1000, 10, 10)
+    model_time[5, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_antminer <- predict.antminer(model_antminer, subset(testset, select=-diagnosis))
+    predict_time[5, i+1]<-Sys.time()-starttime
+    tab_antminer<-conf_matrix_table(result_antminer$class, testset$diagnosis)
+    conf_antminer <- confusionMatrix(tab_antminer)
+    results[5, i+1]<-c(conf_antminer$overall['Accuracy'])
+    dermatology_result_antminer[t][[i]]<-result_antminer
+    dermatology_conf_antminer[t][[i]]<-conf_antminer
+
+    starttime<-Sys.time()
+    model_antminer2 <- antminer2(trainset, "diagnosis", 10, 1000, 10, 10)
+    model_time[6, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_antminer2 <- predict.antminer2(model_antminer2, subset(testset, select=-diagnosis))
+    predict_time[6, i+1]<-Sys.time()-starttime
+    tab_antminer2<-conf_matrix_table(result_antminer2$class, testset$diagnosis)
+    conf_antminer2 <- confusionMatrix(tab_antminer2)
+    results[6, i+1]<-c(conf_antminer2$overall['Accuracy'])
+    dermatology_result_antminer2[t][[i]]<-result_antminer2
+    dermatology_conf_antminer2[t][[i]]<-conf_antminer2
+
+    starttime<-Sys.time()
+    model_antminer3 <- antminer3(trainset, "diagnosis", 10, 1000, 10, 10)
+    model_time[7, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_antminer3 <- predict.antminer3(model_antminer3, subset(testset, select=-diagnosis))
+    predict_time[7, i+1]<-Sys.time()-starttime
+    tab_antminer3<-conf_matrix_table(result_antminer3$class, testset$diagnosis)
+    conf_antminer3 <- confusionMatrix(tab_antminer3)
+    results[7, i+1]<-c(conf_antminer3$overall['Accuracy'])
+    dermatology_result_antminer3[t][[i]]<-result_antminer3
+    dermatology_conf_antminer3[t][[i]]<-conf_antminer3
+
+    starttime<-Sys.time()
+    model_antminer4 <- antminer4(trainset, "diagnosis", 10, 1000, 10, 10)
+    model_time[8, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_antminer4 <- predict.antminer4(model_antminer4, subset(testset, select=-diagnosis))
+    predict_time[8, i+1]<-Sys.time()-starttime
+    tab_antminer4<-conf_matrix_table(result_antminer4$class, testset$diagnosis)
+    conf_antminer4 <- confusionMatrix(tab_antminer4)
+    results[8, i+1]<-c(conf_antminer4$overall['Accuracy'])
+    dermatology_result_antminer4[t][[i]]<-result_antminer4
+    dermatology_conf_antminer4[t][[i]]<-conf_antminer4
+  }
+  dermatology_results[[t]]<-results
+  dermatology_model_time[[t]]<-model_time
+  dermatology_predict_time[[t]]<-predict_time
+}
+
+heart_disease <- read.csv(url("http://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.data"), header = FALSE)
+names(heart_disease) <- c("age", "sex", "cp", "trestbps", "chol", "fbs", "restecg", "thalach", "exang","oldpeak","slope","ca","thal","num")
+#usuniecie przypadkow w ktorych brakuje danych
+remove_list<-which(heart_disease[,12]=='?')
+heart_disease<-heart_disease[-remove_list,]
+remove_list<-which(heart_disease[,13]=='?')
+heart_disease<-heart_disease[-remove_list,]
+# for(i in 1:10) {
+#   dermatology[, i]<-as.factor(dermatology[, i])
+# }
+heart_disease$age<-as.numeric(heart_disease$age)
+heart_disease$age <- cut(heart_disease$age, breaks = seq(20, 80, by = 10))
+heart_disease$trestbps <- cut(heart_disease$trestbps, breaks = seq(90, 200, by = 10))
+heart_disease$chol<-as.numeric(heart_disease$chol)
+heart_disease$chol <- cut(heart_disease$chol, breaks = seq(125, 575, by = 25))
+heart_disease$thalach <- cut(heart_disease$thalach, breaks = seq(70, 210, by = 10))
+heart_disease$oldpeak<-as.numeric(heart_disease$oldpeak)
+heart_disease$oldpeak <- cut(heart_disease$oldpeak, breaks = seq(0, 6.5, by = 0.5), right=FALSE)
+
+for(i in 1:14) {
+  heart_disease[, i]<-as.factor(heart_disease[, i])
+}
+
+#10-fold-cross-validation
+#sprawdzian krzyzowy (10 krotna walidacja)
+heart_disease_folds<-list()
+heart_disease_results<-list()
+heart_disease_model_time<-list()
+heart_disease_predict_time<-list()
+
+heart_disease_result_c50 <-list()
+heart_disease_conf_c50<-list()
+
+heart_disease_result_svm <-list()
+heart_disease_conf_svm<-list()
+
+heart_disease_result_bayes <-list()
+heart_disease_conf_bayes<-list()
+
+heart_disease_result_rpart <-list()
+heart_disease_conf_rpart<-list()
+
+heart_disease_result_antminer <-list()
+heart_disease_conf_antminer<-list()
+
+heart_disease_result_antminer2 <-list()
+heart_disease_conf_antminer2<-list()
+
+heart_disease_result_antminer3 <-list()
+heart_disease_conf_antminer3<-list()
+
+heart_disease_result_antminer4 <-list()
+heart_disease_conf_antminer4<-list()
+
+for(t in 1:test) {
+  folds <- createFolds(heart_disease$num, k = loop_size, returnTrain = TRUE)
+  heart_disease_folds[[t]]<-folds
+  #data frame with all results
+  results <- as.data.frame(setNames(replicate(loop_size+1,numeric(0), simplify = F), c("algorithm", "accuracy")))
+  results[1, 1]<-c("C5.0")
+  results[2, 1]<-c("svm")
+  results[3, 1]<-c("naive bayes")
+  results[4, 1]<-c("cart")
+  results[5, 1]<-c("antminer")
+  results[6, 1]<-c("antminer2")
+  results[7, 1]<-c("antminer3")
+  results[8, 1]<-c("antminer4")
+
+  model_time <- as.data.frame(setNames(replicate(loop_size+1,numeric(0), simplify = F), c("algorithm", "accuracy")))
+  model_time[1, 1]<-c("C5.0")
+  model_time[2, 1]<-c("svm")
+  model_time[3, 1]<-c("naive bayes")
+  model_time[4, 1]<-c("cart")
+  model_time[5, 1]<-c("antminer")
+  model_time[6, 1]<-c("antminer2")
+  model_time[7, 1]<-c("antminer3")
+  model_time[8, 1]<-c("antminer4")
+
+  predict_time <- as.data.frame(setNames(replicate(loop_size+1,numeric(0), simplify = F), c("algorithm", "accuracy")))
+  predict_time[1, 1]<-c("C5.0")
+  predict_time[2, 1]<-c("svm")
+  predict_time[3, 1]<-c("naive bayes")
+  predict_time[4, 1]<-c("cart")
+  predict_time[5, 1]<-c("antminer")
+  predict_time[6, 1]<-c("antminer2")
+  predict_time[7, 1]<-c("antminer3")
+  predict_time[8, 1]<-c("antminer4")
+
+  for(i in 1:loop_size) {
+    trainset<-heart_disease[ folds[[i]] ,]
+    testset<-heart_disease[ -folds[[i]] ,]
+
+    starttime<-Sys.time()
+    model_c50 <- C5.0(num ~ ., data=trainset)
+    model_time[1, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_c50 <- predict(object=model_c50, newdata=testset, type="class")
+    predict_time[1, i+1]<-Sys.time()-starttime
+    tab_c50<-conf_matrix_table(result_c50, testset$num)
+    conf_c50 <- confusionMatrix(tab_c50)
+    results[1, i+1]<-c(conf_c50$overall['Accuracy'])
+    heart_disease_result_c50[t][[i]]<-result_c50
+    heart_disease_conf_c50[t][[i]]<-conf_c50
+
+    starttime<-Sys.time()
+    model_svm <- svm(num ~ ., data=trainset, type="C-classification")
+    model_time[2, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_svm <- predict(object=model_svm, newdata=testset)
+    predict_time[2, i+1]<-Sys.time()-starttime
+    tab_svm<-conf_matrix_table(result_svm, testset$num)
+    conf_svm <- confusionMatrix(tab_svm)
+    results[2, i+1]<-c(conf_svm$overall['Accuracy'])
+    heart_disease_result_svm[t][[i]]<-result_svm
+    heart_disease_conf_svm[t][[i]]<-conf_svm
+
+    starttime<-Sys.time()
+    model_bayes <- naiveBayes(x = subset(trainset, select=-num), y = trainset$num)
+    model_time[3, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_bayes <- predict(object = model_bayes, newdata = testset, type = "class")
+    predict_time[3, i+1]<-Sys.time()-starttime
+    tab_bayes<-conf_matrix_table(result_bayes, testset$num)
+    conf_bayes <- confusionMatrix(tab_bayes)
+    results[3, i+1]<-c(conf_bayes$overall['Accuracy'])
+    heart_disease_result_bayes[t][[i]]<-result_bayes
+    heart_disease_conf_bayes[t][[i]]<-conf_bayes
+
+    starttime<-Sys.time()
+    model_rpart <- rpart(num ~ ., data=trainset)
+    model_time[4, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_rpart <- predict(object=model_rpart, newdata=testset, type="class")
+    predict_time[4, i+1]<-Sys.time()-starttime
+    tab6<-conf_matrix_table(result_rpart, testset$num)
+    conf_rpart <- confusionMatrix(tab6)
+    results[4, i+1]<-c(conf_rpart$overall['Accuracy'])
+    heart_disease_result_rpart[t][[i]]<-result_rpart
+    heart_disease_conf_rpart[t][[i]]<-conf_rpart
+
+    starttime<-Sys.time()
+    model_antminer <- antminer(trainset, "num", 10, 1000, 10, 10)
+    model_time[5, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_antminer <- predict.antminer(model_antminer, subset(testset, select=-num))
+    predict_time[5, i+1]<-Sys.time()-starttime
+    tab_antminer<-conf_matrix_table(result_antminer$class, testset$num)
+    conf_antminer <- confusionMatrix(tab_antminer)
+    results[5, i+1]<-c(conf_antminer$overall['Accuracy'])
+    heart_disease_result_antminer[t][[i]]<-result_antminer
+    heart_disease_conf_antminer[t][[i]]<-conf_antminer
+
+    starttime<-Sys.time()
+    model_antminer2 <- antminer2(trainset, "num", 10, 1000, 10, 10)
+    model_time[6, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_antminer2 <- predict.antminer2(model_antminer2, subset(testset, select=-num))
+    predict_time[6, i+1]<-Sys.time()-starttime
+    tab_antminer2<-conf_matrix_table(result_antminer2$class, testset$num)
+    conf_antminer2 <- confusionMatrix(tab_antminer2)
+    results[6, i+1]<-c(conf_antminer2$overall['Accuracy'])
+    heart_disease_result_antminer2[t][[i]]<-result_antminer2
+    heart_disease_conf_antminer2[t][[i]]<-conf_antminer2
+
+    starttime<-Sys.time()
+    model_antminer3 <- antminer3(trainset, "num", 10, 1000, 10, 10)
+    model_time[7, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_antminer3 <- predict.antminer3(model_antminer3, subset(testset, select=-num))
+    predict_time[7, i+1]<-Sys.time()-starttime
+    tab_antminer3<-conf_matrix_table(result_antminer3$class, testset$num)
+    conf_antminer3 <- confusionMatrix(tab_antminer3)
+    results[7, i+1]<-c(conf_antminer3$overall['Accuracy'])
+    heart_disease_result_antminer3[t][[i]]<-result_antminer3
+    heart_disease_conf_antminer3[t][[i]]<-conf_antminer3
+
+    starttime<-Sys.time()
+    model_antminer4 <- antminer4(trainset, "num", 10, 1000, 10, 10)
+    model_time[8, i+1]<-Sys.time()-starttime
+    starttime<-Sys.time()
+    result_antminer4 <- predict.antminer4(model_antminer4, subset(testset, select=-num))
+    predict_time[8, i+1]<-Sys.time()-starttime
+    tab_antminer4<-conf_matrix_table(result_antminer4$class, testset$num)
+    conf_antminer4 <- confusionMatrix(tab_antminer4)
+    results[8, i+1]<-c(conf_antminer4$overall['Accuracy'])
+    heart_disease_result_antminer4[t][[i]]<-result_antminer4
+    heart_disease_conf_antminer4[t][[i]]<-conf_antminer4
+  }
+  heart_disease_results[[t]]<-results
+  heart_disease_model_time[[t]]<-model_time
+  heart_disease_predict_time[[t]]<-predict_time
 }

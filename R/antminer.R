@@ -30,6 +30,7 @@ library(entropy);
 antminer <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, NumberOfRulesConverge, MinCasesPerRule) {
   #zamien data frame na data table
   trainingSet<-as.data.table(trainingSet)
+  #browser()
   #przenies kolumne z atrybutami decyzyjnymi na sam koniec data table
   setcolorder(trainingSet, c(setdiff(names(trainingSet), class), class))
   #liczba klas atrybutu decyzyjnego
@@ -95,6 +96,7 @@ antminer <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, NumberO
 
       isMinCasesPerRule<-TRUE
       addedTermIndex<-1
+      #browser()
       while(sum.used_attributes > 0 & isMinCasesPerRule) {
         #######compute eta####################################
         etas <- lapply(entropies ,function(x) {sapply(x, function(entropy) {eta(nr_of_class, x, entropy, rule.used_attributes)})})
@@ -102,7 +104,7 @@ antminer <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, NumberO
         #######compute probabilities##########################
         #some prob can be 0
         #adding 1 to all prob solves this problem
-        probabilities <- mapply(function(x, y) {mapply(function(eta, pheromone) {( (eta*pheromone)/(sum.used_attributes*sum(x*y)) ) + 1}, x, y)}, etas, pheromones)
+        probabilities <- mapply(function(x, y) {mapply(function(eta, pheromone) {( (eta*pheromone)/(sum.used_attributes*sum(x*y)) ) + 1}, x, y, SIMPLIFY = FALSE)}, etas, pheromones, SIMPLIFY = FALSE)
         #######koniec compute probabilities
         #wylosowane termy na podstawie prawdopodobienstwa
         unlistTerms <- unlist(removeUsedTerms(terms, rule.used_attributes))
@@ -231,9 +233,25 @@ getTerms<-function(trainingSet) {
   #zwraca unikalne wartości z każdej kolumny danych treningowych
   #2 oznacza ze operuje na kolumnach, 1 by oznaczala ze na wierszach
   terms<-apply(trainingSet, 2, unique)
+  tc<-lapply(1:length(terms), function(x) {lapply(terms[[x]], function(term) {namedTerm(term, terms[x])})})
+  #terms2<-apply(trainingSet, 2, function(x) {list(unique(x))})
+  #terms2<-lapply(1:length(trainingSet), function(x) {unique(trainingSet[,x, with=FALSE])})
+  #terms<-split(terms,seq(ncol(terms)))
   #lapply(terms, function(x) {sapply(x, function(term) {namedTerm(term, x)})})
   #lapply(terms, function(x) {sapply(x, function(term) {term}, USE.NAMES = FALSE)})
-  lapply(1:length(terms), function(x) {lapply(terms[[x]], function(term) {namedTerm(term, terms[x])})})
+  terms2<-list()
+  for(i in 1:ncol(trainingSet)) {
+    u<-unique(trainingSet[,i, with=FALSE])
+    terms2[[i]]<-list()
+    for(j in 1:length(u[[1]])) {
+      terms2[[i]][[j]]<-as.character(u[[1]][[j]])
+      names(terms2[[i]][[j]])<-names(u)
+    }
+  }
+  #browser()
+  return(terms2)
+  #bcd<-lapply(1:length(terms2), function(x) {lapply(terms2[[x]], function(term) {namedTerm(term, terms2[x])})})
+  #vd<-lapply(1:length(terms), function(x) {lapply(terms[[x]], function(term) {namedTerm(term, terms[x])})})
 }
 
 namedTerm<-function(term, terms) {
@@ -250,6 +268,7 @@ computeEntropy <- function(terms, data, class) {
 
 #oblicza entropie danego terma, czyli entropie pary atrybut-wartosc
 entropy <- function(term, col, data, class) {
+  #browser()
   cases <- data[get(names(data)[col])==term, class, with=FALSE]
   #data[which(data[col]==term),class]
   freqs <- table(cases)/nrow(cases)
@@ -290,7 +309,7 @@ eta <- function(nr_of_class, entropies, entropy, used_attributes) {
 #zwraca id atrybutu ktorego wartoscia jest dany term
 getAttributeId <- function(terms, term) {
   #min(which(sapply(terms, function(x) {is.element(term, x)}) == TRUE))
-  which(sapply(sapply(terms, function(x) {sapply(x, function(y) {checkEqualTerm(term, y)})}), function(row) {is.element(TRUE, row)}) == TRUE)
+  which(sapply(sapply(terms, function(x) {sapply(x, function(y) {checkEqualTerm(term, y)}, simplify = FALSE)}, simplify = FALSE), function(row) {is.element(TRUE, row)}, simplify = FALSE) == TRUE)
 }
 
 #sprawdza czy termy ma taka sama wartosc i nazwe
@@ -370,7 +389,7 @@ isEqualRule <- function(rule1, rules) {
   }
   rule2<-rules[[length(rules)]]
   #funkcja all sprawdza czy wszystkie wartosci sa TRUE, jestli tak to zwraca TRUE
-  all(mapply(function(term, attributeId) {is.element(term, rule2[[1]]) & is.element(attributeId, rule2[[2]])}, rule1[[1]], rule1[[2]]))
+  all(mapply(function(term, attributeId) {is.element(term, rule2[[1]]) & is.element(attributeId, rule2[[2]])}, rule1[[1]], rule1[[2]]), SIMPLIFY = FALSE)
 }
 
 
@@ -378,8 +397,10 @@ isEqualRule <- function(rule1, rules) {
 predict.antminer <- function(model, data) {
   discoveredRules <- model[[1]]
   defaultClass <- model[[2]]
+  #test<-apply(data,1, function(x) {
   test<-apply(data,1, function(x) {
-    result <- sapply(discoveredRules, function(y) {isCoveredByRule(y,x)})
+    #browser()
+    result <- sapply(discoveredRules, function(y) {isCoveredByRule(y,x)}, simplify = FALSE)
     coveredRules<-which(result == TRUE)
     if(length(coveredRules)!=0) {
       id<-coveredRules[1]
@@ -391,6 +412,7 @@ predict.antminer <- function(model, data) {
     }
     return(x)
   })
+  #browser()
   n<-ncol(data)
   names <- names(data)
   names<-append(names,"class")
