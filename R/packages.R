@@ -7,3 +7,4 @@ install.packages("C50")
 install.packages("caret", dependencies = TRUE)
 #antminer
 install.packages("entropy", repos = "http://cran.us.r-project.org")
+install.packages("plyr")
