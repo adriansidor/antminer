@@ -541,7 +541,6 @@ for(t in 1:test) {
 mushroom <- read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data"), header = FALSE)
 names(mushroom) <- c("edibility", "cap-shape", "cap_surface", "cap_color", "bruises?", "odor", "gill_attachment", "gill_spacing", "gill_size", "gill_color", "stalk_shape", "stalk_root", "stalk_surface_above_ring", "stalk_surface_below_ring", "stalk_color_above_ring", "stalk_color_below_ring", "veil_type", "veil_color", "ring_number", "ring_type", "spore_print_color", "population", "habitat")
 mushroom <- mushroom[-17] #usuwanie atrybutu z jednym przypadkiem
-
 #10-fold-cross-validation
 #sprawdzian krzyzowy (10 krotna walidacja)
 mushroom_folds<-list()
@@ -662,6 +661,7 @@ for(t in 1:test) {
     starttime<-Sys.time()
     model_antminer <- antminer(trainset, "edibility", 10, 1000, 10, 10)
     model_time[5, i+1]<-Sys.time()-starttime
+    Sys.time()-starttime
     starttime<-Sys.time()
     result_antminer <- predict.antminer(model_antminer, subset(testset, select=-edibility))
     predict_time[5, i+1]<-Sys.time()-starttime
