@@ -37,7 +37,7 @@ antminer3 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
 
   #####wyznacz wszystkie termy (pary atrybut-wartosc)
   terms <- getTerms3(trainingSet[,!class, with=FALSE])
-  #####koniec
+
   initialPheromone <- 1/length(unlist(terms))
   nr_of_columns<-length(terms)
 
@@ -47,8 +47,6 @@ antminer3 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
   #na poczatku lista regul jest pusta
   discoveredRules <- list()
   while(nrow(trainingSet) > maxUncoveredCases) {
-    print(nrow(trainingSet))
-    #print(nrow(trainingSet))
     #numer mrowki
     i <- 1;
     #indeks testu zbieznosci
@@ -212,7 +210,6 @@ antminer3 <- function(trainingSet,class, maxUncoveredCases, NumberOfAnts, Number
       discoveredRules[[length(discoveredRules)+1]]<-bestRule
       a<-coveredCases3(bestRule[[1]], bestRule[[2]], trainingSet, columnNames)
       trainingSet<-trainingSet[-a]
-      #trainingSet<-trainingSet[-coveredCases5(bestRule[[1]], bestRule[[2]], trainingSet, columnNames)]
     } else {
       print("przerywam algorytm")
       break;
@@ -239,7 +236,6 @@ getTerms3<-function(trainingSet) {
       names(terms2[[i]][[j]])<-names(u)
     }
   }
-  #browser()
   return(terms2)
 }
 
@@ -258,7 +254,6 @@ computeEntropy3 <- function(terms, data, class) {
 #oblicza entropie danego terma, czyli entropie pary atrybut-wartosc
 entropy3 <- function(term, col, data, class) {
   cases <- data[get(names(data)[col])==term, class, with=FALSE]
-  #data[which(data[col]==term),class]
   freqs <- table(cases)/nrow(cases)
   entropy.empirical(freqs, unit="log2");
 }
@@ -267,10 +262,7 @@ entropy3 <- function(term, col, data, class) {
 #liczba odwrotnie proporcjonalna do liczby wartości wszystkich atrybutow
 initPheromone3 <- function(terms) {
   initialPheromone <- 1/length(unlist(terms))
-  #lapply(terms, function(x) {sapply(x, function(y) {initialPheromone})})
   lapply(terms, function(x) {sapply(x, function(y) {namedPheromone3(y,initialPheromone)})})
-
-  #lapply(1:length(terms), function(i) {lapply(terms[[i]], function(y) {initialPheromone})})
 }
 
 namedPheromone3<-function(term, pheromone) {
@@ -296,7 +288,6 @@ eta3 <- function(nr_of_class, entropies, entropy, used_attributes) {
 
 #zwraca id atrybutu ktorego wartoscia jest dany term
 getAttributeId3 <- function(terms, term) {
-  #min(which(sapply(terms, function(x) {is.element(term, x)}) == TRUE))
   which(sapply(sapply(terms, function(x) {sapply(x, function(y) {checkEqualTerm3(term, y)}, simplify = FALSE)}, simplify = FALSE), function(row) {is.element(TRUE, row)}, simplify = FALSE) == TRUE)
 }
 
@@ -348,20 +339,7 @@ quality3 <- function(rule, trainingSet, class, columnNames) {
   tn<-nrow(cases[get(class) != predictedClass])
 
   quality <- (tp/(tp+fn))*(tn/(fp+tn))
-  #wzor na jakosc jest nie najlepszy bo mozna uzyskac dzielenie przez 0
-  #jak spada nam liczba przypadkow treningowych to moze sie zdarzyc
-  #ze choc jedna z powyzszych 4 wartosci bedzie 0
-  #w sumie to nie wiem co z tym robic, implementuje nie swoje zalozenia
-  #dziwne ze nie ujeli tego w artykule
-  #na razie jakosc ustawie na 0
-  #jakosc wplywa na zmiane feromonu wiec jest to dosc wazne
-  #Poprawka
-  #TP nie moze byc zero
-  #TN moze byc zero
-  #powinien byc tylko pierwszy czlon, drugi z TN do usuniecia w mojej wersji
-  #mysle tez ze nie da sie uzyskac na koniec innej klasy
-  #bo caly czas badamy jakosc reguly na podstawie klasy ktora wywnioskowalismy
-  #nie wybierzemy gorszej jakosci czyli reguly w ktorej inna klasa bedzie domuniujaca!!
+
   if(is.nan(quality)) {
     return(0)
   }
